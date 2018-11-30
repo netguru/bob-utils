@@ -1,0 +1,54 @@
+{
+  "name": "bob-utils",
+  "version": "0.0.0",
+  "private": false,
+  "author": "Adam Nowak <adam.nowak@netguru.co>",
+  "description": "Utils for bob-the-bot",
+  "main": "index.js",
+  "scripts": {
+    "test:local": "export $(cat .env.test | xargs); nyc mocha ./**/*.spec.js --exit",
+    "test": "nyc mocha ./**/*.spec.js --exit",
+    "coverage": "nyc report --reporter=lcov"
+  },
+  "dependencies": {
+    "@octokit/rest": "^15.9.5",
+    "@slack/client": "^4.3.1",
+    "asyncro": "^3.0.0",
+    "auto-bind": "^1.2.1",
+    "axios": "^0.18.0",
+    "circleci": "^0.3.3",
+    "cron": "^1.4.1",
+    "googleapis": "^33.0.0",
+    "hubot": "3",
+    "hubot-heroku-keepalive": "^1.0.3",
+    "hubot-slack": "^4.5.3",
+    "humanize-duration": "^3.15.1",
+    "ioredis": "^4.2.0",
+    "js-yaml": "^3.12.0",
+    "lodash": "^4.17.10",
+    "moment": "^2.22.2",
+    "mustache": "^2.3.1",
+    "randomcolor": "^0.5.3",
+    "rollbar": "^2.5.0",
+    "sinon": "^6.1.5",
+    "toml": "^2.3.3",
+    "yargs": "^12.0.1"
+  },
+  "engines": {
+    "node": ">=8.x",
+    "yarn": ">=1.x"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^5.2.0",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-chai-friendly": "^0.4.1",
+    "eslint-plugin-import": "^2.13.0",
+    "faker": "^4.1.0",
+    "hubot-test-helper": "davlis/hubot-test-helper#v2.0.5",
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
+    "supertest": "^3.1.0"
+  }
+}
