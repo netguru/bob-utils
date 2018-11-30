@@ -1,0 +1,4 @@
+{
+  "actionsEndpoint": "/slack/interactivity",
+  "slashEndpoint": "/slack/slashCommands"
+}
