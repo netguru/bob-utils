@@ -1,9 +1,9 @@
 {
-  "name": "bob-clients",
+  "name": "bob-utils",
   "version": "0.0.0",
   "private": false,
   "author": "Adam Nowak <adam.nowak@netguru.co>",
-  "description": "Clients for bob-the-bot",
+  "description": "Utils for bob-the-bot",
   "main": "index.js",
   "scripts": {
     "test:local": "export $(cat .env.test | xargs); nyc mocha ./**/*.spec.js --exit",
