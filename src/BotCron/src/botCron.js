@@ -1,19 +1,20 @@
-const fs = require('fs');
-
 const { CronJob } = require('cron');
 
-const getTaskData = (taskName) => {
-  const [file, taskLabel] = taskName.split('/');
-  const taskData = fs.readFileSync(`${__dirname}/../../../config/cronTasks/${file}.json`);
+const getTaskData = (taskName, cronParams) => {
+  let params = cronParams;
 
-  return { ...JSON.parse(taskData)[taskLabel], taskLabel };
+  if (typeof cronParams === 'string') {
+    params = JSON.parse(cronParams);
+  }
+
+  return { ...params[taskName] };
 };
 
-module.exports = (taskName, robot, autoStart = true) => {
-  const { cron, params, taskLabel } = getTaskData(taskName);
+module.exports = (taskName, cronParams, robot, autoStart = true) => {
+  const { cron, params } = getTaskData(taskName, cronParams);
 
   const job = new CronJob(cron, () => {
-    robot.emit(taskLabel, params);
+    robot.emit(taskName, params);
   }, null, autoStart);
 
   return job;
