@@ -12,7 +12,7 @@ const { scopes, path } = require('../config/google.config.json').oauth;
 
 const UserFactory = require('./factories/UserFactory');
 
-const googleClientExtractor = require('../src/clients/src/GoogleCalendarClientFactory');
+const googleClientExtractor = require('../src/clients/GoogleCalendarClientFactory');
 const MessageBuilder = require('../src/MessageBuilder');
 
 const redisClient = {

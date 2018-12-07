@@ -3,9 +3,9 @@ const { google } = require('googleapis');
 const autoBind = require('auto-bind');
 
 const redisClient = require('./RedisClientFactory');
-const MessageBuilder = require('../../MessageBuilder');
-const assertOrThrow = require('../../AssertOrThrow');
-const { scopes, path } = require('../../../config/google.config.json').oauth;
+const MessageBuilder = require('../MessageBuilder');
+const assertOrThrow = require('../AssertOrThrow');
+const { scopes, path } = require('../../config/google.config.json').oauth;
 
 const {
   CALENDAR_CLIENT_ID,
