@@ -1,10 +1,6 @@
 # bob-utils
 
-Bob utils are separated into to branches:
+Bob utils for [bob-the-bot](https://github.com/netguru/bob-the-bot)
 
-  * utils
-    * Versions are under tag **utils-vX.X.X**
-    * To implement run: `yarn add https://github.com/netguru/bob-utils.git#utils-vX.X.X`
-  * clients
-    * Versions are under tag **clients-vX.X.X**
-    * To implement run: `yarn add https://github.com/netguru/bob-utils.git#clients-vX.X.X`
+* Versions are under tag **vX.X.X**
+* To implement run: `yarn add https://github.com/netguru/bob-utils.git#vX.X.X`
