@@ -43,17 +43,21 @@ class RespondMultiplexer {
 
   async exec(res) {
     const { action, match } = this.chosen;
-    let result;
+    let response;
 
     try {
-      result = await action(res, match);
-    } catch (err) {
-      this.logError(err);
+      response = await action(res, match);
+    } catch (error) {
+      if (error.userMessage) {
+        return res.send(error.userMessage);
+      }
 
-      const response = err.userMessage || this.defaultUserErrorMessage;
-      res.send(response);
+      this.logError(error);
+
+      return res.send(this.defaultUserErrorMessage);
     }
-    return result;
+
+    return response;
   }
 }
 
