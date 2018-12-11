@@ -1,6 +1,6 @@
 {
   "name": "bob-utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "author": "Adam Nowak <adam.nowak@netguru.co>",
   "description": "Utils for bob-the-bot",
