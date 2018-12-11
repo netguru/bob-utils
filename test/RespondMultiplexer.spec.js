@@ -7,14 +7,10 @@ const { expect } = chai;
 const RespondMultiplexer = require('../src/RespondMultiplexer');
 const BotResponseError = require('../src/BotResponseError');
 
-const responseMock = {
-  send: message => message,
-};
+const responseMock = { send: message => message };
 
 describe('RespondMultiplexer test suite', () => {
-  afterEach(() => {
-    sinon.restore();
-  });
+  afterEach(() => sinon.restore());
 
   it('should execute proper action', async () => {
     const multiplexer = new RespondMultiplexer();
