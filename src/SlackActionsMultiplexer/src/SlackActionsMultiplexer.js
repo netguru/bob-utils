@@ -72,7 +72,7 @@ class SlackActionsMultiplexer {
       const { text, command } = req.body;
 
       try {
-        this.slashActionsMultiplexer.choose(text || command);
+        this.slashActionsMultiplexer.choose(command);
         await this.slashActionsMultiplexer.chosen.action(res, req.body, this.robot);
       } catch (error) {
         Rollbar.error(error);
