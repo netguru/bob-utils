@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 const { google } = require('googleapis');
 const autoBind = require('auto-bind');
+const Rollbar = require('rollbar');
 
 const redisClient = require('./RedisClientFactory');
 const MessageBuilder = require('../MessageBuilder');
@@ -40,7 +41,17 @@ class GoogleClient {
     return this.token;
   }
 
-  async getClientFor(name, version) {
+  getProperty(object, propertyPath) {
+    const property = propertyPath[0];
+
+    if (propertyPath.length === 1) {
+      return object[property];
+    }
+
+    return this.getProperty(object[property], propertyPath.slice(1));
+  }
+
+  async getFunctionFor(name, version, ...propertyPath) {
     this.verifyGoogleProperty(name);
 
     try {
@@ -50,7 +61,22 @@ class GoogleClient {
 
       this.setCredentials(this.token);
 
-      return google[name]({ version, auth: this.oAuthClient });
+      return async (...args) => {
+        try {
+          const client = google[name]({ version, auth: this.oAuthClient });
+          const response = await this.getProperty(client, propertyPath).call(client, ...args);
+
+          return response;
+        } catch (error) {
+          Rollbar.error(error);
+
+          if ([400, 401, 403].includes(error.response.status)) {
+            this.askForAuthorization();
+          }
+
+          throw new Error(`Error on google ${name}, ${version}, ${propertyPath}`);
+        }
+      };
     } catch (error) {
       this.askForAuthorization();
       throw new Error('Could not get google client, authentication required');
@@ -180,7 +206,7 @@ module.exports = async (robot) => {
     await googleClient.initTokenRoute();
   }
 
-  return googleClient.getClientFor;
+  return googleClient.getFunctionFor;
 };
 
 module.exports.googleClient = googleClient;

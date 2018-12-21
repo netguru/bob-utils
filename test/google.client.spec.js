@@ -209,22 +209,31 @@ describe('Google extractor client test suite', () => {
   it('Should throw an error if google does not have given property', async () => {
     const name = 'somefakeproperty';
 
-    await expect(googleClient.getClientFor(name)).to.eventually.rejectedWith(`Googleapis does not have ${name} property`);
+    await expect(googleClient.getFunctionFor(name)).to.eventually.rejectedWith(`Googleapis does not have ${name} property`);
   });
 
   it('Should return a client', async () => {
     const name = 'calendar';
     const version = 'v3';
+    const propsPath = ['events', 'list'];
+
+    const functionSpy = sinon.spy();
 
     sinon.stub(googleClient, 'token').value({ refresh_token: 'ok' });
+    sinon.stub(google, 'calendar').returns({
+      events: {
+        list: functionSpy,
+      },
+    });
 
-    const expected = google[name]({ version, auth: googleClient.oAuthClient });
-    const client = await googleClient.getClientFor(name, version);
+    const googleFunction = await googleClient.getFunctionFor(name, version, ...propsPath);
 
-    expect(client).to.eql(expected);
+    await googleFunction();
+
+    expect(functionSpy.calledOnce).to.eql(true);
   });
 
-  it('Should ask for token is none is available after request', async () => {
+  it('Should ask for token if none is available when looking for function', async () => {
     const name = 'calendar';
     const version = 'v3';
 
@@ -232,9 +241,45 @@ describe('Google extractor client test suite', () => {
     sinon.stub(redisClient, 'get').resolves(undefined);
     sinon.stub(googleClient, 'robot').value(room.robot);
 
-    await expect(googleClient.getClientFor(name, version)).to
+    await expect(googleClient.getFunctionFor(name, version)).to
       .eventually
       .rejectedWith('Could not get google client, authentication required');
+
+    const authUrl = googleClient.oAuthClient.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+    });
+
+    const expected = [
+      ['hubot', `Could you authorize me with google?\n${authUrl}`],
+    ];
+
+    expect(room.messages).to.eql(expected);
+  });
+
+  it('Should ask for token if the error status 400, 401 or 403 was thrown', async () => {
+    const name = 'calendar';
+    const version = 'v3';
+    const propsPath = ['events', 'list'];
+
+    sinon.stub(googleClient, 'token').value({});
+    sinon.stub(googleClient, 'robot').value(room.robot);
+
+    const statusError = new Error('bad');
+    statusError.response = { status: 401 };
+
+    sinon.stub(googleClient, 'token').value({ refresh_token: 'ok' });
+    sinon.stub(google, 'calendar').returns({
+      events: {
+        list: () => Promise.reject(statusError),
+      },
+    });
+
+    const googleFunction = await googleClient.getFunctionFor(name, version, ...propsPath);
+
+    await expect(googleFunction()).to
+      .eventually
+      .rejectedWith(`Error on google ${name}, ${version}, ${propsPath}`);
 
     const authUrl = googleClient.oAuthClient.generateAuthUrl({
       access_type: 'offline',
