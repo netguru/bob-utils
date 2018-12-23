@@ -125,13 +125,19 @@ class GoogleClient {
     return this.oAuthClient.setCredentials(token);
   }
 
-  askForAuthorization() {
-    const authUrl = this.oAuthClient.generateAuthUrl({
+  getAuthUrl() {
+    return this.oAuthClient.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
     });
+  }
 
-    this.messageMasterRoom(`Could you authorize me with google?\n${authUrl}`);
+  askForAuthorization() {
+    this.messageMasterRoom(`Could you authorize me with google?\n${this.getAuthUrl()}`);
+  }
+
+  logAuthorizationUrl() {
+    this.robot.logger.info('google auth url: ', this.getAuthUrl());
   }
 
   async initTokenRoute() {
@@ -158,6 +164,7 @@ class GoogleClient {
       const token = await this.retrieveTokenFromDB();
 
       this.setCredentials(token);
+      this.logAuthorizationUrl();
     } catch (error) {
       this.askForAuthorization();
     }
