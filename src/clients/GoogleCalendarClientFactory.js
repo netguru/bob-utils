@@ -71,14 +71,14 @@ class GoogleClient {
           Rollbar.error(error);
 
           if ([400, 401, 403].includes(error.response.status)) {
-            this.askForAuthorization(true);
+            this.askForAuthorization();
           }
 
           throw new Error(`Error on google ${name}, ${version}, ${propertyPath}`);
         }
       };
     } catch (error) {
-      this.askForAuthorization(true);
+      this.askForAuthorization();
       throw new Error('Could not get google client, authentication required');
     }
   }
@@ -125,17 +125,19 @@ class GoogleClient {
     return this.oAuthClient.setCredentials(token);
   }
 
-  askForAuthorization(toRoom) {
-    const authUrl = this.oAuthClient.generateAuthUrl({
+  getAuthUrl() {
+    return this.oAuthClient.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
     });
+  }
 
-    this.robot.logger.info('google auth url: ', authUrl);
+  askForAuthorization() {
+    this.messageMasterRoom(`Could you authorize me with google?\n${this.getAuthUrl()}`);
+  }
 
-    if (toRoom) {
-      this.messageMasterRoom(`Could you authorize me with google?\n${authUrl}`);
-    }
+  logAuthorizationUrl() {
+    this.robot.logger.info('google auth url: ', this.getAuthUrl());
   }
 
   async initTokenRoute() {
@@ -162,9 +164,9 @@ class GoogleClient {
       const token = await this.retrieveTokenFromDB();
 
       this.setCredentials(token);
-      this.askForAuthorization(false);
+      this.logAuthorizationUrl();
     } catch (error) {
-      this.askForAuthorization(true);
+      this.askForAuthorization();
     }
   }
 
