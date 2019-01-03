@@ -19,6 +19,7 @@ const DialogBuilder = require('./src/DialogBuilder');
 const SlackActionRequest = require('./src/SlackActionRequest');
 const PluginsLoader = require('./src/PluginsLoader');
 const Locales = require('./src/Locales');
+const SlackIdMapper = require('./src/SlackIdMapper');
 
 module.exports = {
   botCron,
@@ -35,6 +36,7 @@ module.exports = {
   SlackActionRequest,
   PluginsLoader,
   Locales,
+  SlackIdMapper,
   clients: {
     AtlassianClientFactory,
     CircleciClientFactory,
@@ -42,5 +44,5 @@ module.exports = {
     GoogleCalendarClientFactory,
     RedisClientFactory,
     SlackClientFactory,
-  }
+  },
 };
