@@ -44,21 +44,15 @@ class Locales {
   get(key, params) {
     const data = this.getDataFromFile(key);
 
+    if (Array.isArray(data)) {
+      return Locales.renderMessage(_.sample(data), params);
+    }
+
     if (!['string', 'number'].includes(typeof data)) {
-      throw new Error('Selected locale is not a string nor number');
+      throw new Error('Selected locale is not a string, number nor array');
     }
 
     return Locales.renderMessage(data, params);
-  }
-
-  getRandom(key, params) {
-    const data = this.getDataFromFile(key);
-
-    if (!Array.isArray(data)) {
-      throw new Error('Value needs to be an array');
-    }
-
-    return Locales.renderMessage(_.sample(data), params);
   }
 }
 

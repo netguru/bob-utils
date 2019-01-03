@@ -82,18 +82,16 @@ describe('Locales util test suite', () => {
 
       const getValue = () => subject.get('first');
 
-      expect(getValue).to.throw('Selected locale is not a string nor number');
+      expect(getValue).to.throw('Selected locale is not a string, number nor array');
     });
-  });
 
-  describe('getRandom', () => {
     it('get random value from key', () => {
       const subject = new Locales({ plugin: 'test' });
       const data = ['first', 'second', 'third'];
 
       sinon.stub(yaml, 'safeLoad').returns({ values: data });
 
-      const result = subject.getRandom('values');
+      const result = subject.get('values');
 
       expect(data).to.include(result);
     });
@@ -105,19 +103,9 @@ describe('Locales util test suite', () => {
 
       sinon.stub(yaml, 'safeLoad').returns({ nested: { values: data } });
 
-      const result = subject.getRandom('nested.values', { value: 'test' });
+      const result = subject.get('nested.values', { value: 'test' });
 
       expect(dataExpected).to.include(result);
-    });
-
-    it('throws an error when value is not an array', () => {
-      const subject = new Locales({ plugin: 'test' });
-
-      sinon.stub(yaml, 'safeLoad').returns({ key: 'test' });
-
-      const getRandomValue = () => subject.getRandom('key');
-
-      expect(getRandomValue).to.throw('Value needs to be an array');
     });
   });
 });
