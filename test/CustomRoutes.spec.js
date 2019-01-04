@@ -7,7 +7,9 @@ const sinon = require('sinon');
 const CustomRoutes = require('../src/CustomRoutes');
 
 const helper = new Helper(path.resolve(__dirname, './factories/ScriptFactory.js'));
+
 const token = 'a2cvf';
+const endpoint = '/test';
 
 describe('SlackActionsMultiplexer test suite', () => {
   let room;
@@ -33,7 +35,6 @@ describe('SlackActionsMultiplexer test suite', () => {
   it('Should create a route and return 200', async () => {
     const router = CustomRoutes.getInstance(room.robot);
     const callback = (req, res) => res.sendStatus(200);
-    const endpoint = '/test';
 
     router.createRoute(endpoint, callback);
 
@@ -47,7 +48,6 @@ describe('SlackActionsMultiplexer test suite', () => {
   it('Should create a route and return unauthorized if wrong token', async () => {
     const router = CustomRoutes.getInstance(room.robot);
     const callback = (req, res) => res.sendStatus(200);
-    const endpoint = '/test';
 
     router.createRoute(endpoint, callback);
 
@@ -61,7 +61,6 @@ describe('SlackActionsMultiplexer test suite', () => {
   it('Should create a route and return unauthorized if no authorization header', async () => {
     const router = CustomRoutes.getInstance(room.robot);
     const callback = (req, res) => res.sendStatus(200);
-    const endpoint = '/test';
 
     router.createRoute(endpoint, callback);
 
@@ -76,7 +75,6 @@ describe('SlackActionsMultiplexer test suite', () => {
     const callback = () => {
       throw new Error('Bad');
     };
-    const endpoint = '/test';
 
     router.createRoute(endpoint, callback);
 
@@ -87,10 +85,34 @@ describe('SlackActionsMultiplexer test suite', () => {
       .expect(500);
   });
 
+  it('Should create a GET route and return 200', async () => {
+    const router = CustomRoutes.getInstance(room.robot);
+    const callback = (req, res) => res.sendStatus(200);
+
+    router.createRoute(endpoint, callback, 'get');
+
+    await request(room.robot.server)
+      .get(endpoint)
+      .set('Authorization', token)
+      .expect('Access-Control-Allow-Origin', '*')
+      .expect(200);
+  });
+
+  it('Should create route that does not requre authorization header and return 200', async () => {
+    const router = CustomRoutes.getInstance(room.robot);
+    const callback = (req, res) => res.sendStatus(200);
+
+    router.createRoute(endpoint, callback, 'post', false);
+
+    await request(room.robot.server)
+      .post(endpoint)
+      .expect('Access-Control-Allow-Origin', '*')
+      .expect(200);
+  });
+
   it('Should throw an error if the endpoint is beeing duplicated', async () => {
     const router = CustomRoutes.getInstance(room.robot);
     const callback = (req, res) => res.sendStatus(200);
-    const endpoint = '/test';
 
     router.createRoute(endpoint, callback);
 

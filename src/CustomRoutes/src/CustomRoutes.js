@@ -22,13 +22,14 @@ class CustomRoutes {
     });
   }
 
-  createRoute(path, callback, requireToken = true) {
+  createRoute(path, callback, method = 'post', requireToken = true) {
     if (this.routes.includes(path)) {
       throw new Error(`Path: ${path} already existd`);
     }
 
     this.routes.push(path);
-    this.robot.router.post(path, async (req, res) => {
+
+    this.robot.router[method](path, async (req, res) => {
       if (requireToken && req.token !== process.env.ROUTE_TOKEN) {
         return res.status(401).send('Unauthorized');
       }
