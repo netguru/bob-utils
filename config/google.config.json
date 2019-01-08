@@ -2,7 +2,8 @@
   "oauth": {
     "scopes": [
       "https://www.googleapis.com/auth/calendar",
-      "https://www.googleapis.com/auth/admin.directory.resource.calendar"
+      "https://www.googleapis.com/auth/admin.directory.resource.calendar",
+      "https://www.googleapis.com/auth/drive"
     ],
     "path": "google/auth"
   }
