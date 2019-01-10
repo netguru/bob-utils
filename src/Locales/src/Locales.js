@@ -45,7 +45,9 @@ class Locales {
     const data = this.getDataFromFile(key);
 
     if (Array.isArray(data)) {
-      return Locales.renderMessage(_.sample(data), params);
+      return process.env.NODE_ENV === 'test'
+        ? Locales.renderMessage(data[0], params)
+        : Locales.renderMessage(_.sample(data), params);
     }
 
     if (!['string', 'number'].includes(typeof data)) {

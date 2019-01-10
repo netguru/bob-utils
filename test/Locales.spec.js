@@ -85,7 +85,9 @@ describe('Locales util test suite', () => {
       expect(getValue).to.throw('Selected locale is not a string, number nor array');
     });
 
-    it('get random value from key', () => {
+    it('get random value from key if NODE_ENV is not test', () => {
+      sinon.stub(process, 'env').value({ ...process.env, NODE_ENV: 'development' });
+
       const subject = new Locales({ plugin: 'test' });
       const data = ['first', 'second', 'third'];
 
@@ -94,6 +96,19 @@ describe('Locales util test suite', () => {
       const result = subject.get('values');
 
       expect(data).to.include(result);
+    });
+
+    it('get value with index 0 from array when NODE_ENV is test', () => {
+      sinon.stub(process, 'env').value({ ...process.env, NODE_ENV: 'test' });
+
+      const subject = new Locales({ plugin: 'test' });
+      const data = ['first', 'second', 'third'];
+
+      sinon.stub(yaml, 'safeLoad').returns({ values: data });
+
+      const result = subject.get('values');
+
+      expect(data[0]).to.equal(result);
     });
 
     it('get random value from nested key and renders parameter', () => {
