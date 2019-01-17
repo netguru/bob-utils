@@ -62,6 +62,14 @@ class SlackActionsMultiplexer {
       } catch (error) {
         Rollbar.error(error);
         logger.error(error);
+
+        if (error.data) {
+          logger.info({
+            error: JSON.stringify(error.data),
+            actionJSONPayload,
+          });
+        }
+
         res.sendStatus(500);
       }
     });
