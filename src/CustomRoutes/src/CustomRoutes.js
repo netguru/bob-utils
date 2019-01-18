@@ -35,11 +35,13 @@ class CustomRoutes {
       }
 
       try {
-        return callback(req, res);
+        await callback(req, res);
       } catch (error) {
         Rollbar.error(error);
         return res.status(500).send('Internal Error');
       }
+
+      return 1;
     });
   }
 }

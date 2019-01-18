@@ -69,10 +69,17 @@ class GoogleClient {
           return response;
         } catch (error) {
           Rollbar.error(error);
+          this.robot.logger.error(error);
 
           if ([400, 401, 403].includes(error.response.status)) {
             this.askForAuthorization();
           }
+
+          this.robot.logger.error({
+            error: JSON.stringify(error.response.data),
+            method: JSON.stringify(propertyPath),
+            arguments: JSON.stringify(args),
+          });
 
           throw new Error(`Error on google ${name}, ${version}, ${propertyPath}`);
         }
