@@ -69,6 +69,7 @@ class GoogleClient {
           return response;
         } catch (error) {
           Rollbar.error(error);
+          this.robot.logger.error(error);
 
           if ([400, 401, 403].includes(error.response.status)) {
             this.askForAuthorization();
