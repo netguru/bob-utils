@@ -38,6 +38,12 @@ class CustomRoutes {
         await callback(req, res);
       } catch (error) {
         Rollbar.error(error);
+
+        this.robot.logger.error({
+          path,
+          error,
+        });
+
         return res.status(500).send('Internal Error');
       }
 
