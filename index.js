@@ -4,7 +4,7 @@ const GithubClientFactory = require('./src/clients/GithubClientFactory');
 const GoogleCalendarClientFactory = require('./src/clients/GoogleCalendarClientFactory');
 const RedisClientFactory = require('./src/clients/RedisClientFactory');
 const SlackClientFactory = require('./src/clients/SlackClientFactory');
-const JiraClientFactory = require('./src/clients/JiraClientFactory');
+const JiraClient = require('./src/clients/JiraClient');
 
 const MessageRenderer = require('./src/MessageRenderer');
 const MessageBuilder = require('./src/MessageBuilder');
@@ -47,6 +47,6 @@ module.exports = {
     GoogleCalendarClientFactory,
     RedisClientFactory,
     SlackClientFactory,
-    JiraClientFactory,
+    JiraClient,
   },
 };
