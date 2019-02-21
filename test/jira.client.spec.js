@@ -45,6 +45,7 @@ describe('Unit tests - Jira Client', () => {
 
     it('should throw not authenticated error', async () => {
       sinon.stub(jiraClient, 'axios').rejects('err');
+      sinon.stub(jiraClient, 'notStatusError').returns(true);
       sinon.stub(jiraClient, 'isAuthenticated').returns(false);
 
       await expect(jiraClient.request('/api', { query: { param: 1 } }, 'get'))

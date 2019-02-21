@@ -24,9 +24,11 @@ class JiraClient {
 
       return data;
     } catch (err) {
-      rollbar.error(err);
-      assertOrThrow(this.isAuthenticated(err.response), new Error('Is not authenticated'));
       assertOrThrow(this.notStatusError(err.response), new Error('Wrong status'));
+
+      rollbar.error(err);
+
+      assertOrThrow(this.isAuthenticated(err.response), new Error('Is not authenticated'));
 
       throw Error('Request error');
     }
