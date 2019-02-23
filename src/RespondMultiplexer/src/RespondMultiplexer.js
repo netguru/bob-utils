@@ -36,17 +36,17 @@ class RespondMultiplexer {
     const response = this.responses.find(c => c.trigger.exec(text)) || this.default;
     const match = response.trigger.exec(text);
 
-    this.chosen = { action: response.action, match };
+    this.chosen = { response, match };
 
     return this;
   }
 
   async exec(res) {
-    const { action, match } = this.chosen;
-    let response;
+    const { response, match } = this.chosen;
+    let result;
 
     try {
-      response = await action(res, match);
+      result = await response.action(res, match);
     } catch (error) {
       if (error.userMessage) {
         return res.send(error.userMessage);
@@ -57,7 +57,7 @@ class RespondMultiplexer {
       return res.send(this.defaultUserErrorMessage);
     }
 
-    return response;
+    return result;
   }
 }
 
