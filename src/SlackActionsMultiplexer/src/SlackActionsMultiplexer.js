@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 const Rollbar = require('rollbar');
 const _ = require('lodash');
+const decode = require('unescape');
 
 const RespondMultiplexer = require('../../RespondMultiplexer');
 const SlackActionRequest = require('../../SlackActionRequest');
@@ -52,7 +53,7 @@ class SlackActionsMultiplexer {
 
   createRoutesForActions(logger) {
     this.robot.router.post(actionsEndpoint, async (req, res) => {
-      const actionJSONPayload = JSON.parse(req.body.payload);
+      const actionJSONPayload = this.unescapeQueryParamsInActionPayload(req.body.payload);
 
       try {
         await this.sendResponseMessage(actionJSONPayload);
@@ -103,6 +104,15 @@ class SlackActionsMultiplexer {
   slashCommandIdAlreadyExists(regexp) {
     return _.some(this.slashActionsMultiplexer.responses,
       ({ trigger }) => trigger.toString() === regexp.toString());
+  }
+
+  unescapeQueryParamsInActionPayload(payload) {
+    let payloadJSON = JSON.parse(payload);
+    const queryParams = _.get(payloadJSON, 'actions[0].selected_options[0].value');
+    if(typeof queryParams === 'string' || queryParams instanceof String) {
+      payloadJSON.actions[0].selected_options[0].value = decode(queryParams);
+    }
+    return payloadJSON;
   }
 }
 
