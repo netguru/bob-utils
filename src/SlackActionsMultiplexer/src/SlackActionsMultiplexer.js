@@ -107,10 +107,11 @@ class SlackActionsMultiplexer {
   }
 
   unescapeQueryParamsInActionPayload(payload) {
-    let payloadJSON = JSON.parse(payload);
-    const queryParams = _.get(payloadJSON, 'actions[0].selected_options[0].value');
-    if(typeof queryParams === 'string' || queryParams instanceof String) {
-      payloadJSON.actions[0].selected_options[0].value = decode(queryParams);
+    const payloadJSON = JSON.parse(payload);
+    const queryPath = 'actions[0].selected_options[0].value';
+    const queryParams = _.result(payloadJSON, queryPath);
+    if(_.isString(queryParams)) {
+      _.set(payloadJSON, queryPath, decode(queryParams));
     }
     return payloadJSON;
   }
