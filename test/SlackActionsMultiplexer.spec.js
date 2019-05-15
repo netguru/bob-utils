@@ -2,6 +2,7 @@ const Helper = require('hubot-test-helper');
 const { expect } = require('chai');
 const request = require('supertest');
 const path = require('path');
+const sinon = require('sinon');
 
 const SlackActionsMultiplexer = require('../src/SlackActionsMultiplexer');
 const dependenciesLocator = require('../src/DependenciesLocator');
@@ -40,7 +41,10 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(() => slackActions.addAction(/some_cb/, () => { })).to.throw('Callback id duplication');
   });
 
-  it('Should unescape HTML entities in query params', () => {
+  it('Should unescape HTML entities in query params', async () => {
+    const responseSpy = sinon.spy(slackActions, 'sendResponseMessage');
+    slackActions.addAction(/callback/, res => res.actions[0]);
+
     const payload = JSON.stringify({
       callback_id: 'callback',
       actions: [
@@ -53,8 +57,12 @@ describe('SlackActionsMultiplexer test suite', () => {
         },
       ],
     });
-    const unescapedPayload = slackActions.unescapeQueryParamsInActionPayload(payload);
-    const queryParams = unescapedPayload.actions[0].selected_options[0].value;
+
+    await request(room.robot.server)
+      .post(actionsEndpoint)
+      .send({ payload });
+
+    const queryParams = responseSpy.args[0][0].actions[0].selected_options[0].value;
 
     expect(queryParams).to.equal('{"title":"\'<foo> & bar""}');
   });
