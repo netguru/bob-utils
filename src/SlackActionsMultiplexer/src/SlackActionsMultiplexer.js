@@ -51,6 +51,16 @@ class SlackActionsMultiplexer {
     }
   }
 
+  unescapeQueryParamsInActionPayload(payload) {
+    const payloadJSON = JSON.parse(payload);
+    const queryPath = 'actions[0].selected_options[0].value';
+    const queryParams = _.result(payloadJSON, queryPath);
+    if(_.isString(queryParams)) {
+      _.set(payloadJSON, queryPath, decode(queryParams));
+    }
+    return payloadJSON;
+  }
+
   createRoutesForActions(logger) {
     this.robot.router.post(actionsEndpoint, async (req, res) => {
       const actionJSONPayload = this.unescapeQueryParamsInActionPayload(req.body.payload);
@@ -104,16 +114,6 @@ class SlackActionsMultiplexer {
   slashCommandIdAlreadyExists(regexp) {
     return _.some(this.slashActionsMultiplexer.responses,
       ({ trigger }) => trigger.toString() === regexp.toString());
-  }
-
-  unescapeQueryParamsInActionPayload(payload) {
-    const payloadJSON = JSON.parse(payload);
-    const queryPath = 'actions[0].selected_options[0].value';
-    const queryParams = _.result(payloadJSON, queryPath);
-    if(_.isString(queryParams)) {
-      _.set(payloadJSON, queryPath, decode(queryParams));
-    }
-    return payloadJSON;
   }
 }
 
