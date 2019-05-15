@@ -23,6 +23,7 @@ describe('SlackActionsMultiplexer test suite', () => {
 
   after(() => {
     room.destroy();
+    sinon.restore();
   });
 
   it('responds with status 500 and throws error when callback is not specified', async () => {
@@ -42,8 +43,14 @@ describe('SlackActionsMultiplexer test suite', () => {
   });
 
   it('Should unescape HTML entities in query params', async () => {
-    const responseSpy = sinon.spy(slackActions, 'sendResponseMessage');
-    slackActions.addAction(/callback/, res => res.actions[0]);
+    let queryParams = null;
+    const responseStub = sinon
+      .stub(slackActions, 'sendResponseMessage')
+      .callsFake((payload) => {
+        queryParams = payload.actions[0].selected_options[0].value;
+      });
+
+    slackActions.addAction(/callback/, (req) => { req.status(200).end(); });
 
     const payload = JSON.stringify({
       callback_id: 'callback',
@@ -62,8 +69,7 @@ describe('SlackActionsMultiplexer test suite', () => {
       .post(actionsEndpoint)
       .send({ payload });
 
-    const queryParams = responseSpy.args[0][0].actions[0].selected_options[0].value;
-
+    expect(responseStub.calledOnce).to.equal(true);
     expect(queryParams).to.equal('{"title":"\'<foo> & bar""}');
   });
 
