@@ -40,6 +40,25 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(() => slackActions.addAction(/some_cb/, () => { })).to.throw('Callback id duplication');
   });
 
+  it('Should unescape HTML entities in query params', () => {
+    const payload = JSON.stringify({
+      callback_id: 'callback',
+      actions: [
+        {
+          selected_options: [
+            {
+              value: '{"title":"\'&lt;foo&gt; &amp; bar""}',
+            },
+          ],
+        },
+      ],
+    });
+    const unescapedPayload = slackActions.unescapeQueryParamsInActionPayload(payload);
+    const queryParams = unescapedPayload.actions[0].selected_options[0].value;
+
+    expect(queryParams).to.equal('{"title":"\'<foo> & bar""}');
+  });
+
   it('responds with status 500 and throws error when callback is not specified', async () => {
     const payload = JSON.stringify({ text: 'example' });
 
@@ -51,7 +70,7 @@ describe('SlackActionsMultiplexer test suite', () => {
   });
 
   it('Should throw an error in case of callback duplicate', () => {
-    slackActions.addSlashCommand(/some_cb/, () => { });
+    slackActions.addSlashCommand(/some_cb/, () => {});
 
     expect(() => slackActions.addSlashCommand(/some_cb/, () => { })).to.throw('Slash command duplication');
   });
