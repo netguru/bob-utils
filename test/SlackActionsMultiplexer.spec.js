@@ -2,6 +2,7 @@ const Helper = require('hubot-test-helper');
 const { expect } = require('chai');
 const request = require('supertest');
 const path = require('path');
+const sinon = require('sinon');
 
 const SlackActionsMultiplexer = require('../src/SlackActionsMultiplexer');
 const dependenciesLocator = require('../src/DependenciesLocator');
@@ -22,6 +23,7 @@ describe('SlackActionsMultiplexer test suite', () => {
 
   after(() => {
     room.destroy();
+    sinon.restore();
   });
 
   it('responds with status 500 and throws error when callback is not specified', async () => {
@@ -40,6 +42,37 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(() => slackActions.addAction(/some_cb/, () => { })).to.throw('Callback id duplication');
   });
 
+  it('Should unescape HTML entities in query params', async () => {
+    let queryParams = null;
+    const responseStub = sinon
+      .stub(slackActions, 'sendResponseMessage')
+      .callsFake((payload) => {
+        queryParams = payload.actions[0].selected_options[0].value;
+      });
+
+    slackActions.addAction(/callback/, (req) => { req.status(200).end(); });
+
+    const payload = JSON.stringify({
+      callback_id: 'callback',
+      actions: [
+        {
+          selected_options: [
+            {
+              value: '{"title":"\'&lt;foo&gt; &amp; bar""}',
+            },
+          ],
+        },
+      ],
+    });
+
+    await request(room.robot.server)
+      .post(actionsEndpoint)
+      .send({ payload });
+
+    expect(responseStub.calledOnce).to.equal(true);
+    expect(queryParams).to.equal('{"title":"\'<foo> & bar""}');
+  });
+
   it('responds with status 500 and throws error when callback is not specified', async () => {
     const payload = JSON.stringify({ text: 'example' });
 
@@ -51,7 +84,7 @@ describe('SlackActionsMultiplexer test suite', () => {
   });
 
   it('Should throw an error in case of callback duplicate', () => {
-    slackActions.addSlashCommand(/some_cb/, () => { });
+    slackActions.addSlashCommand(/some_cb/, () => {});
 
     expect(() => slackActions.addSlashCommand(/some_cb/, () => { })).to.throw('Slash command duplication');
   });

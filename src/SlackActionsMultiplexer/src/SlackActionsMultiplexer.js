@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 const Rollbar = require('rollbar');
 const _ = require('lodash');
+const decode = require('unescape');
 
 const RespondMultiplexer = require('../../RespondMultiplexer');
 const SlackActionRequest = require('../../SlackActionRequest');
@@ -50,9 +51,19 @@ class SlackActionsMultiplexer {
     }
   }
 
+  unescapeQueryParamsInActionPayload(payload) {
+    const payloadJSON = JSON.parse(payload);
+    const queryPath = 'actions[0].selected_options[0].value';
+    const queryParams = _.result(payloadJSON, queryPath);
+    if(_.isString(queryParams)) {
+      _.set(payloadJSON, queryPath, decode(queryParams));
+    }
+    return payloadJSON;
+  }
+
   createRoutesForActions(logger) {
     this.robot.router.post(actionsEndpoint, async (req, res) => {
-      const actionJSONPayload = JSON.parse(req.body.payload);
+      const actionJSONPayload = this.unescapeQueryParamsInActionPayload(req.body.payload);
 
       try {
         await this.sendResponseMessage(actionJSONPayload);
