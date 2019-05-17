@@ -15,19 +15,19 @@ describe('SlackActionsMultiplexer test suite', () => {
   let room;
   let slackActions;
 
-  before(() => {
+  beforeEach(() => {
     room = helper.createRoom();
-    dependenciesLocator.forceSet('slackActionsMultiplexer', new SlackActionsMultiplexer(room.robot));
-    slackActions = dependenciesLocator.get('slackActionsMultiplexer');
+    slackActions = new SlackActionsMultiplexer(room.robot);
+    dependenciesLocator.forceSet('slackActionsMultiplexer', slackActions);
   });
 
-  after(() => {
+  afterEach(() => {
     room.destroy();
     sinon.restore();
   });
 
   it('responds with status 500 and throws error when callback is not specified', async () => {
-    const payload = JSON.stringify({ callback_id: '' });
+    const payload = JSON.stringify({ type: 'interactive_message', callback_id: '' });
 
     const response = await request(room.robot.server)
       .post(actionsEndpoint)
@@ -53,6 +53,7 @@ describe('SlackActionsMultiplexer test suite', () => {
     slackActions.addAction(/callback/, (req) => { req.status(200).end(); });
 
     const payload = JSON.stringify({
+      type: 'interactive_message',
       callback_id: 'callback',
       actions: [
         {
@@ -74,7 +75,7 @@ describe('SlackActionsMultiplexer test suite', () => {
   });
 
   it('responds with status 500 and throws error when callback is not specified', async () => {
-    const payload = JSON.stringify({ text: 'example' });
+    const payload = JSON.stringify({ type: 'interactive_message', text: 'example' });
 
     const response = await request(room.robot.server)
       .post(slashEndpoint)
@@ -83,9 +84,67 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(response.statusCode).to.equal(500);
   });
 
-  it('Should throw an error in case of callback duplicate', () => {
+  it('Should throw an error in case of slashcommand duplicate', () => {
     slackActions.addSlashCommand(/some_cb/, () => {});
 
     expect(() => slackActions.addSlashCommand(/some_cb/, () => { })).to.throw('Slash command duplication');
+  });
+
+  it('responds with status 500 and throws error when action_id is not specified', async () => {
+    const payload = JSON.stringify({ type: 'block_actions', actions: [{ action_id: '' }] });
+
+    const response = await request(room.robot.server)
+      .post(actionsEndpoint)
+      .send({ payload });
+
+    expect(response.statusCode).to.equal(500);
+  });
+
+  it('Should throw an error in case of block action duplicate', () => {
+    slackActions.addBlock(/some_cb/, () => {});
+
+    expect(() => slackActions.addBlock(/some_cb/, () => { })).to.throw('Block id duplication');
+  });
+
+  it('should call action multiplexer handler when callback_id is specified', async () => {
+    const payload = JSON.stringify({ type: 'interactive_message', callback_id: 'some_cb' });
+    const interactiveActionChooseSpy = sinon.spy(slackActions.actionMultiplexer, 'choose');
+    slackActions.addAction(/some_cb/, (res) => { res.send(); });
+
+    const response = await request(room.robot.server)
+      .post(actionsEndpoint)
+      .send({ payload });
+
+    expect(response.statusCode).to.equal(200);
+    expect(interactiveActionChooseSpy.called).to.equal(true);
+  });
+
+  it('should call block multiplexer handler when action_id is specified', async () => {
+    const payload = JSON.stringify({ type: 'block_actions', actions: [{ action_id: 'some_cb' }] });
+    const bloackActionChooseSpy = sinon.spy(slackActions.blockActionMultiplexer, 'choose');
+    slackActions.addBlock(/some_cb/, (res) => { res.send(); });
+
+    const response = await request(room.robot.server)
+      .post(actionsEndpoint)
+      .send({ payload });
+
+    expect(response.statusCode).to.equal(200);
+    expect(bloackActionChooseSpy.called).to.equal(true);
+  });
+
+  it('throws error when multiplexer type is not recognized', async () => {
+    expect(() => slackActions.selectInteractiveMultiplexer({ type: 'foo' }))
+      .to.throw('Unknown interactive message type');
+  });
+
+  it('responses with 500 if multiplexer type is not recognized', async () => {
+    const payload = JSON.stringify({ type: 'unknown' });
+    slackActions.addBlock(/some_cb/, (res) => { res.send(); });
+
+    const response = await request(room.robot.server)
+      .post(actionsEndpoint)
+      .send({ payload });
+
+    expect(response.statusCode).to.equal(500);
   });
 });
