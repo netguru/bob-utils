@@ -17,7 +17,7 @@ class SlackActionsMultiplexer {
     this.blockActionMultiplexer = new RespondMultiplexer(logger);
     this.slashActionsMultiplexer = new RespondMultiplexer(logger);
 
-    this.assignActionMultiplexers();
+    this.setupActionMultiplexers();
     this.setDefaultResponse();
 
     this.createRoutesForInteractive(logger);
@@ -77,7 +77,7 @@ class SlackActionsMultiplexer {
 
       try {
         await this.sendResponseMessage(actionJSONPayload);
-        const { multiplexer, path } = this.selectInteractiveMultiplexer(actionJSONPayload);
+        const { multiplexer, path } = this.getInteractiveMultiplexer(actionJSONPayload);
 
         multiplexer.choose(_.get(actionJSONPayload, path));
         await multiplexer.chosen.action(res, actionJSONPayload, this.robot);
@@ -112,7 +112,7 @@ class SlackActionsMultiplexer {
     });
   }
 
-  assignActionMultiplexers() {
+  setupActionMultiplexers() {
     const assignMultiplexer = (multiplexer, path) => ({ multiplexer, path });
     this.interactiveMultiplexers = new Map([
       ['interactive_message', assignMultiplexer(this.actionMultiplexer, 'callback_id')],
@@ -120,12 +120,9 @@ class SlackActionsMultiplexer {
     ]);
   }
 
-  selectInteractiveMultiplexer({ type } = {}) {
+  getInteractiveMultiplexer({ type } = {}) {
     const muxData = this.interactiveMultiplexers.get(type);
-    if (!muxData) {
-      throw Error('Unknown interactive message type');
-    }
-    return muxData;
+    return muxData || this.interactiveMultiplexers.get('interactive_message');
   }
 
   setDefaultResponse() {

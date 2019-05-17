@@ -42,6 +42,18 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(() => slackActions.addAction(/some_cb/, () => { })).to.throw('Callback id duplication');
   });
 
+  it('Should throw an error in case of slashcommand duplicate', () => {
+    slackActions.addSlashCommand(/some_cb/, () => {});
+
+    expect(() => slackActions.addSlashCommand(/some_cb/, () => { })).to.throw('Slash command duplication');
+  });
+
+  it('Should throw an error in case of block action duplicate', () => {
+    slackActions.addBlock(/some_cb/, () => {});
+
+    expect(() => slackActions.addBlock(/some_cb/, () => { })).to.throw('Block id duplication');
+  });
+
   it('Should unescape HTML entities in query params', async () => {
     let queryParams = null;
     const responseStub = sinon
@@ -74,6 +86,22 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(queryParams).to.equal('{"title":"\'<foo> & bar""}');
   });
 
+  it('chooses block_actions multiplexer for block actions message', async () => {
+    const muxData = slackActions.getInteractiveMultiplexer({ type: 'block_actions' });
+
+    expect(muxData).to.be.an('Object').that.has.keys('multiplexer', 'path');
+    expect(muxData.multiplexer).to.be.equal(slackActions.blockActionMultiplexer);
+    expect(muxData.path).to.be.equal('actions[0].action_id');
+  });
+
+  it('chooses interactive_message multiplexer as the default one', async () => {
+    const muxData = slackActions.getInteractiveMultiplexer({ type: 'foo' });
+
+    expect(muxData).to.be.an('Object').that.has.keys('multiplexer', 'path');
+    expect(muxData.multiplexer).to.be.equal(slackActions.actionMultiplexer);
+    expect(muxData.path).to.be.equal('callback_id');
+  });
+
   it('responds with status 500 and throws error when callback is not specified', async () => {
     const payload = JSON.stringify({ type: 'interactive_message', text: 'example' });
 
@@ -84,12 +112,6 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(response.statusCode).to.equal(500);
   });
 
-  it('Should throw an error in case of slashcommand duplicate', () => {
-    slackActions.addSlashCommand(/some_cb/, () => {});
-
-    expect(() => slackActions.addSlashCommand(/some_cb/, () => { })).to.throw('Slash command duplication');
-  });
-
   it('responds with status 500 and throws error when action_id is not specified', async () => {
     const payload = JSON.stringify({ type: 'block_actions', actions: [{ action_id: '' }] });
 
@@ -98,12 +120,6 @@ describe('SlackActionsMultiplexer test suite', () => {
       .send({ payload });
 
     expect(response.statusCode).to.equal(500);
-  });
-
-  it('Should throw an error in case of block action duplicate', () => {
-    slackActions.addBlock(/some_cb/, () => {});
-
-    expect(() => slackActions.addBlock(/some_cb/, () => { })).to.throw('Block id duplication');
   });
 
   it('should call action multiplexer handler when callback_id is specified', async () => {
@@ -130,21 +146,5 @@ describe('SlackActionsMultiplexer test suite', () => {
 
     expect(response.statusCode).to.equal(200);
     expect(bloackActionChooseSpy.called).to.equal(true);
-  });
-
-  it('throws error when multiplexer type is not recognized', async () => {
-    expect(() => slackActions.selectInteractiveMultiplexer({ type: 'foo' }))
-      .to.throw('Unknown interactive message type');
-  });
-
-  it('responses with 500 if multiplexer type is not recognized', async () => {
-    const payload = JSON.stringify({ type: 'unknown' });
-    slackActions.addBlock(/some_cb/, (res) => { res.send(); });
-
-    const response = await request(room.robot.server)
-      .post(actionsEndpoint)
-      .send({ payload });
-
-    expect(response.statusCode).to.equal(500);
   });
 });
