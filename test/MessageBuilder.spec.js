@@ -44,6 +44,24 @@ describe('MessageBuilder', () => {
         text: 'Hello world', x: 'y', z: 'x', attachments: [{ name: 'eoeo' }],
       });
     });
+
+    it('should build message with blocks', () => {
+      const builder = new MessageBuilder({ text: 'Hello world' });
+      builder.addBlock({ name: 'eoeo' });
+
+      const result = builder.buildMessage();
+      expect(result).to.eql({ text: 'Hello world', blocks: [{ name: 'eoeo' }] });
+    });
+
+    it('should operate with chain methods on blocks', () => {
+      const builder = new MessageBuilder({ text: 'Hello world' });
+      builder.addBlock({ name: 'eoeo' }).addBlock({ name: 'foo' });
+
+      const result = builder.buildMessage();
+      expect(result).to.eql({
+        text: 'Hello world', blocks: [{ name: 'eoeo' }, { name: 'foo' }],
+      });
+    });
   });
 
   describe('Other functions', () => {
