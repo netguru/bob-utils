@@ -13,11 +13,14 @@ class SlackActionsMultiplexer {
 
     const { logger } = robot;
 
-    this.multiplexer = new RespondMultiplexer(logger);
+    this.actionMultiplexer = new RespondMultiplexer(logger);
+    this.blockActionMultiplexer = new RespondMultiplexer(logger);
     this.slashActionsMultiplexer = new RespondMultiplexer(logger);
 
+    this.setupActionMultiplexers();
     this.setDefaultResponse();
-    this.createRoutesForActions(logger);
+
+    this.createRoutesForInteractive(logger);
     this.createRoutesForSlash(logger);
   }
 
@@ -25,7 +28,14 @@ class SlackActionsMultiplexer {
     if (this.actionIdAlreadyExists(regexp)) {
       throw new Error('Callback id duplication');
     }
-    this.multiplexer.addResponse(regexp, action);
+    this.actionMultiplexer.addResponse(regexp, action);
+  }
+
+  addBlock(regexp, action) {
+    if (this.blockIdAlreadyExists(regexp)) {
+      throw new Error('Block id duplication');
+    }
+    this.blockActionMultiplexer.addResponse(regexp, action);
   }
 
   addSlashCommand(regexp, action) {
@@ -55,21 +65,22 @@ class SlackActionsMultiplexer {
     const payloadJSON = JSON.parse(payload);
     const queryPath = 'actions[0].selected_options[0].value';
     const queryParams = _.result(payloadJSON, queryPath);
-    if(_.isString(queryParams)) {
+    if (_.isString(queryParams)) {
       _.set(payloadJSON, queryPath, decode(queryParams));
     }
     return payloadJSON;
   }
 
-  createRoutesForActions(logger) {
+  createRoutesForInteractive(logger) {
     this.robot.router.post(actionsEndpoint, async (req, res) => {
       const actionJSONPayload = this.unescapeQueryParamsInActionPayload(req.body.payload);
 
       try {
         await this.sendResponseMessage(actionJSONPayload);
+        const { multiplexer, path } = this.getInteractiveMultiplexer(actionJSONPayload);
 
-        this.multiplexer.choose(actionJSONPayload.callback_id);
-        await this.multiplexer.chosen.action(res, actionJSONPayload, this.robot);
+        multiplexer.choose(_.get(actionJSONPayload, path));
+        await multiplexer.chosen.action(res, actionJSONPayload, this.robot);
       } catch (error) {
         Rollbar.error(error);
         logger.error(error);
@@ -88,7 +99,7 @@ class SlackActionsMultiplexer {
 
   createRoutesForSlash(logger) {
     this.robot.router.post(slashEndpoint, async (req, res) => {
-      const { text, command } = req.body;
+      const { command } = req.body;
 
       try {
         this.slashActionsMultiplexer.choose(command);
@@ -101,19 +112,40 @@ class SlackActionsMultiplexer {
     });
   }
 
+  setupActionMultiplexers() {
+    const assignMultiplexer = (multiplexer, path) => ({ multiplexer, path });
+    this.interactiveMultiplexers = new Map([
+      ['interactive_message', assignMultiplexer(this.actionMultiplexer, 'callback_id')],
+      ['block_actions', assignMultiplexer(this.blockActionMultiplexer, 'actions[0].action_id')],
+    ]);
+  }
+
+  getInteractiveMultiplexer({ type } = {}) {
+    const muxData = this.interactiveMultiplexers.get(type);
+    return muxData || this.interactiveMultiplexers.get('interactive_message');
+  }
+
   setDefaultResponse() {
-    this.multiplexer.setDefaultResponse(() => { throw Error('No callback found'); });
+    this.actionMultiplexer.setDefaultResponse(() => { throw Error('No callback found'); });
+    this.blockActionMultiplexer.setDefaultResponse(() => { throw Error('No block action found'); });
     this.slashActionsMultiplexer.setDefaultResponse(() => { throw Error('No slash command found'); });
   }
 
-  actionIdAlreadyExists(regexp) {
-    return _.some(this.multiplexer.responses,
+  checkIdCollision(regexp, multiplexer) {
+    return _.some(multiplexer.responses,
       ({ trigger }) => trigger.toString() === regexp.toString());
   }
 
+  actionIdAlreadyExists(regexp) {
+    return this.checkIdCollision(regexp, this.actionMultiplexer);
+  }
+
+  blockIdAlreadyExists(regexp) {
+    return this.checkIdCollision(regexp, this.blockActionMultiplexer);
+  }
+
   slashCommandIdAlreadyExists(regexp) {
-    return _.some(this.slashActionsMultiplexer.responses,
-      ({ trigger }) => trigger.toString() === regexp.toString());
+    return this.checkIdCollision(regexp, this.slashActionsMultiplexer);
   }
 }
 
