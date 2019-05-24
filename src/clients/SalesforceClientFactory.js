@@ -1,7 +1,7 @@
 const { Connection } = require('jsforce');
 const Rollbar = require('rollbar');
 
-const { path } = require('../../config/salesforce.config.json').webhook;
+const { webhooks: { path } } = require('../../config/salesforce.config.json');
 
 const {
   SALESFORCE_LOGIN_URL,
