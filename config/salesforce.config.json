@@ -1,0 +1,5 @@
+{
+  "webhook": {
+    "path": "webhook/salesforce"
+  }
+}

@@ -1,5 +1,7 @@
-/* eslint-disable class-methods-use-this */
-var jsforce = require('jsforce');
+const { Connection } = require('jsforce');
+const Rollbar = require('rollbar');
+
+const { path } = require('../../config/salesforce.config.json').webhook;
 
 const {
   SALESFORCE_LOGIN_URL,
@@ -12,23 +14,39 @@ const {
 
 class SalesforceClient {
   constructor() {
-    this.conn = new jsforce.Connection({
-      oauth2 : {
+    this.oAuthClient = new Connection({
+      oauth2: {
         loginUrl: SALESFORCE_LOGIN_URL,
         clientId: SALESFORCE_CLIENT_ID,
         clientSecret: SALESFORCE_CLIENT_SECRET,
-        redirectUri: SALESFORCE_REDIRECT_URI,
-        }
+        redirectUri: `${SALESFORCE_REDIRECT_URI}/${path}`,
+      },
     });
+  }
 
+  async authorize() {
     const username = SALESFORCE_USERNAME;
     const password = SALESFORCE_PASSWORD;
 
-    this.conn.login(username, password);
+    try {
+      return await this.oAuthClient.login(username, password);
+    } catch (error) {
+      Rollbar.error(error);
+
+      throw new Error('Authentication failed');
+    }
   }
 
-  query() {
-    return this.conn.query('');
+  isAuthorized() {
+    return Object.keys(this.oAuthClient).includes('userInfo');
+  }
+
+  async getProjects() {
+    if (!this.isAuthorized()) {
+      await this.authorize();
+    }
+
+    return this.oAuthClient.query('SELECT name FROM project__c');
   }
 }
 
