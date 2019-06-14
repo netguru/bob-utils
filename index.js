@@ -11,6 +11,7 @@ const MessageBuilder = require('./src/MessageBuilder');
 const RespondMultiplexer = require('./src/RespondMultiplexer');
 const ObjectToArray = require('./src/ObjectToArray');
 const BotResponseError = require('./src/BotResponseError');
+const assertOrSendAndThrow = require('./src/AssertOrSendAndThrow');
 const assertOrThrow = require('./src/AssertOrThrow');
 const asyncAssertOrThrow = require('./src/AsyncAssertOrThrow');
 const dependenciesLocator = require('./src/DependenciesLocator');
@@ -30,6 +31,7 @@ module.exports = {
   RespondMultiplexer,
   ObjectToArray,
   BotResponseError,
+  assertOrSendAndThrow,
   assertOrThrow,
   asyncAssertOrThrow,
   dependenciesLocator,
