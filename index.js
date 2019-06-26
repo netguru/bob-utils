@@ -22,6 +22,7 @@ const PluginsLoader = require('./src/PluginsLoader');
 const Locales = require('./src/Locales');
 const SlackIdMapper = require('./src/SlackIdMapper');
 const CustomRoutes = require('./src/CustomRoutes');
+const BulkMessageSender = require('./src/BulkMessageSender');
 
 module.exports = {
   botCron,
@@ -40,6 +41,7 @@ module.exports = {
   Locales,
   SlackIdMapper,
   CustomRoutes,
+  BulkMessageSender,
   clients: {
     AtlassianClientFactory,
     CircleciClientFactory,
