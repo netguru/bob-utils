@@ -1,24 +1,23 @@
 const autoBind = require('auto-bind');
 const asyncro = require('asyncro');
-const Rollbar = require('rollbar');
-
-const { postMessageDelay } = require('../../../config/slack.config.json');
 
 const { createTextMessage } = require('./messages');
 
 const { HUBOT_SLACK_TOKEN } = process.env;
 
 class BulkMessageSender {
-  constructor(channels, logger, slackClient) {
+  constructor(channels, slackClient, options = {}) {
     this.channels = channels;
-    this.logger = logger;
     this.slackClient = slackClient;
+
+    this.postMessageDelay = options.delay || 1000;
+    this.errors = new Map();
 
     autoBind(this);
   }
 
-  static create(channels, logger, slackClient) {
-    return new BulkMessageSender(channels, logger, slackClient);
+  static create(channels, slackClient, options = {}) {
+    return new BulkMessageSender(channels, slackClient, options);
   }
 
   async bulkSendMessage(messageContents) {
@@ -29,17 +28,18 @@ class BulkMessageSender {
     };
     await asyncro.reduce(
       this.channels,
-      async (ret, channel) => this.sendBulkTask(ret, message, channel),
+      async (ret, channel) => this.sendBulkTaskReducer(ret, message, channel),
       statistics,
     );
     return statistics;
   }
 
-  async sendBulkTask(ret, message, channel) {
+  async sendBulkTaskReducer(ret, message, channel) {
     const { sent, notSent } = ret;
     const wasSent = await this.postDelayedMessageToChannel(message, channel);
-    const list = wasSent ? sent : notSent;
-    list.push(channel);
+    const appendedArray = wasSent ? sent : notSent;
+    appendedArray.push(channel);
+
     return ret;
   }
 
@@ -49,8 +49,7 @@ class BulkMessageSender {
       await BulkMessageSender.delayAction();
       return true;
     } catch (error) {
-      Rollbar.error(error);
-      this.logger.error(`Cannot send message to "${channel}", ${error.toString()}`);
+      this.errors.set(channel, error);
       return false;
     }
   }
@@ -64,7 +63,7 @@ class BulkMessageSender {
   }
 
   static async delayAction() {
-    return new Promise(resolve => setTimeout(resolve, postMessageDelay));
+    return new Promise(resolve => setTimeout(resolve, this.delay));
   }
 }
 

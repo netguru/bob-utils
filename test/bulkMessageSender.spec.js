@@ -1,9 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const faker = require('faker');
-const rollbar = require('rollbar');
 
-const loggerClientMock = { error: () => {} };
 const slackClientMock = { chat: { postMessage: () => {} } };
 
 const BulkMessageSender = require('../src/BulkMessageSender');
@@ -13,12 +10,12 @@ describe('BulkMessageSender test suite', () => {
   let sender;
 
   before(() => {
-    channels = Array.from(new Array(4), faker.hacker.noun);
+    channels = ['channel-1', 'channel-2', 'channel-3', 'channel-4'];
   });
 
   beforeEach(() => {
     sinon.stub(BulkMessageSender, 'delayAction').resolves();
-    sender = new BulkMessageSender(channels, loggerClientMock, slackClientMock);
+    sender = new BulkMessageSender(channels, slackClientMock);
   });
 
   afterEach(() => {
@@ -34,25 +31,23 @@ describe('BulkMessageSender test suite', () => {
   });
 
   it('returns BulkMessageSender instance via static method', () => {
-    const newSender = BulkMessageSender.create(
-      sender.channels,
-      sender.loggerClientMock,
-      slackClientMock,
-    );
+    const newSender = BulkMessageSender.create(sender.channels, slackClientMock);
 
     expect(newSender.channels).to.deep.equal(sender.channels);
-    expect(newSender.loggerClientMock).to.deep.equal(sender.loggerClientMock);
     expect(newSender.slackClientMock).to.deep.equal(sender.slackClientMock);
   });
 
-  it('sends messages even if some of them were failured and forwards error to rollbar', async () => {
-    const postMessageStub = sinon.stub(slackClientMock.chat, 'postMessage').rejects();
-    const rollbarErrorSpy = sinon.stub(rollbar, 'error');
+  it('gathers all occuring errors within given channels', async () => {
+    sinon.stub(slackClientMock.chat, 'postMessage').rejects();
 
     await sender.bulkSendMessage('foo');
 
-    expect(postMessageStub.callCount).to.be.equal(channels.length);
-    expect(rollbarErrorSpy.callCount).to.be.equal(channels.length);
+    const { errors } = sender;
+    expect(errors).to.be.lengthOf(channels.length);
+    channels.forEach((channel) => {
+      expect(errors.has(channel)).to.be.equal(true);
+      expect(errors.get(channel)).to.be.instanceof(Error);
+    });
   });
 
   it('gathers appropiate statistics', async () => {
@@ -74,5 +69,10 @@ describe('BulkMessageSender test suite', () => {
     await sender.bulkSendMessage('foo');
 
     expect(timeoutStub.callCount).to.be.equal(channels.length);
+  });
+
+  it('sets 1000 ms as default message delay for setTimeout function', async () => {
+    const newSender = new BulkMessageSender(channels, slackClientMock);
+    expect(newSender.postMessageDelay).to.be.equal(1000);
   });
 });
