@@ -1,5 +1,9 @@
-const { expect } = require('chai');
 const sinon = require('sinon');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+
+chai.use(chaiAsPromised);
+const { expect } = chai;
 
 const slackClientMock = { chat: { postMessage: () => {} } };
 
@@ -7,40 +11,62 @@ const BulkMessageSender = require('../src/BulkMessageSender');
 
 describe('BulkMessageSender test suite', () => {
   let channels;
+  let message;
   let sender;
 
   before(() => {
     channels = ['channel-1', 'channel-2', 'channel-3', 'channel-4'];
+    message = { text: 'foo' };
   });
 
   beforeEach(() => {
     sinon.stub(BulkMessageSender, 'delayAction').resolves();
-    sender = new BulkMessageSender(channels, slackClientMock);
+    sender = new BulkMessageSender(slackClientMock, { message, channels });
   });
 
   afterEach(() => {
     sinon.restore();
   });
 
+  it('thows an error when trying to send empty message', async () => {
+    const emptyMessageSender = new BulkMessageSender(slackClientMock);
+    const emptyBulkMessageSend = async () => emptyMessageSender.bulkSendMessage();
+
+    expect(emptyBulkMessageSend()).to.eventually.throw(/Cannot bulk-send empty message/);
+  });
+
+  it('thows an error when trying to send empty channels list', async () => {
+    const emptyChannelsSender = new BulkMessageSender(slackClientMock, {
+      message: { text: 'foo' },
+    });
+    const emptyBulkMessageSend = async () => emptyChannelsSender.bulkSendMessage();
+
+    expect(emptyBulkMessageSend()).to.eventually.throw(/Channels list is empty in bulk-send/);
+  });
+
   it('sends message to appropiate channels', async () => {
     const postMessageSpy = sinon.spy(slackClientMock.chat, 'postMessage');
 
-    await sender.bulkSendMessage('foo');
+    await sender.bulkSendMessage();
 
     expect(postMessageSpy.callCount).to.be.equal(channels.length);
   });
 
   it('returns BulkMessageSender instance via static method', () => {
-    const newSender = BulkMessageSender.create(sender.channels, slackClientMock);
+    const newSender = BulkMessageSender.create(slackClientMock, {
+      channels: sender.channels,
+      message: sender.message,
+    });
 
     expect(newSender.channels).to.deep.equal(sender.channels);
+    expect(newSender.message).to.deep.equal(sender.message);
     expect(newSender.slackClientMock).to.deep.equal(sender.slackClientMock);
   });
 
   it('gathers all occuring errors within given channels', async () => {
     sinon.stub(slackClientMock.chat, 'postMessage').rejects();
 
-    await sender.bulkSendMessage('foo');
+    await sender.bulkSendMessage();
 
     const { errors } = sender;
     expect(errors).to.be.lengthOf(channels.length);
@@ -55,7 +81,7 @@ describe('BulkMessageSender test suite', () => {
       .stub(slackClientMock.chat, 'postMessage')
       .callsFake(() => (postMessageStub.callCount % 2 ? Promise.resolve() : Promise.reject(new Error('Failed'))));
 
-    const statistics = await sender.bulkSendMessage('foo');
+    const statistics = await sender.bulkSendMessage();
 
     expect(postMessageStub.callCount).to.be.equal(channels.length);
     expect(statistics.sent).has.lengthOf(2);
@@ -66,7 +92,7 @@ describe('BulkMessageSender test suite', () => {
     BulkMessageSender.delayAction.restore();
     const timeoutStub = sinon.stub(global, 'setTimeout').callsFake(fn => fn());
 
-    await sender.bulkSendMessage('foo');
+    await sender.bulkSendMessage();
 
     expect(timeoutStub.callCount).to.be.equal(channels.length);
   });
