@@ -44,6 +44,14 @@ describe('BulkMessageSender test suite', () => {
     expect(emptyBulkMessageSend()).to.eventually.throw(/Channels list is empty in bulk-send/);
   });
 
+  it('calls exports static method that sends bulk messages', async () => {
+    const bulkSendStub = sinon.stub(BulkMessageSender.prototype, 'bulkSendMessage').resolves();
+
+    await BulkMessageSender.send();
+
+    expect(bulkSendStub.called).to.be.equal(true);
+  });
+
   it('sends message to appropiate channels', async () => {
     const postMessageSpy = sinon.spy(slackClientMock.chat, 'postMessage');
 
