@@ -17,10 +17,6 @@ class BulkMessageSender {
     autoBind(this);
   }
 
-  static create(slackClient, options = {}) {
-    return new BulkMessageSender(slackClient, options);
-  }
-
   async bulkSendMessage() {
     this.verify();
 
