@@ -80,9 +80,12 @@ describe('BulkMessageSender test suite', () => {
 
     const statistics = await sender.bulkSendMessage();
 
+    console.log(statistics.errors);
+
     expect(postMessageStub.callCount).to.be.equal(channels.length);
     expect(statistics.sent).has.lengthOf(2);
     expect(statistics.notSent).has.lengthOf(2);
+    expect(statistics.errors).has.lengthOf(2);
   });
 
   it('waits appropiate amount of time between message sends', async () => {

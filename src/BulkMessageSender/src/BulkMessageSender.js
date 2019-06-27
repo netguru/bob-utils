@@ -28,6 +28,7 @@ class BulkMessageSender {
     return asyncro.reduce(this.channels, this.sendBulkTaskReducer, {
       sent: [],
       notSent: [],
+      errors: this.errors,
     });
   }
 
