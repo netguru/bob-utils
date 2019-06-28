@@ -1,5 +1,5 @@
 {
-  "webhooks": {
-    "path": "webhook/salesforce"
+  "oauth": {
+    "path": "salesforce/auth"
   }
 }

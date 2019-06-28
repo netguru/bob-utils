@@ -1,7 +1,12 @@
-const { Connection } = require('jsforce');
 const Rollbar = require('rollbar');
+const { Connection } = require('jsforce');
+const autoBind = require('auto-bind');
 
-const { webhooks: { path } } = require('../../config/salesforce.config.json');
+const redisClient = require('./RedisClientFactory');
+
+const {
+  oauth: { path },
+} = require('../../config/salesforce.config.json');
 
 const {
   SALESFORCE_LOGIN_URL,
@@ -22,6 +27,14 @@ class SalesforceClient {
         redirectUri: `${SALESFORCE_REDIRECT_URI}/${path}`,
       },
     });
+
+    this.accessToken = null;
+    this.refreshToken = null;
+    this.instanceUrl = null;
+
+    this.redis = redisClient();
+
+    autoBind(this);
   }
 
   async authorize() {
@@ -50,4 +63,4 @@ class SalesforceClient {
   }
 }
 
-module.exports = SalesforceClient;
+module.exports = () => new SalesforceClient();

@@ -7,7 +7,7 @@ describe('Salesforce factory client test suite', () => {
   let salesforceClient;
 
   beforeEach(async () => {
-    salesforceClient = new SalesforceClient();
+    salesforceClient = SalesforceClient();
   });
 
   afterEach(() => sinon.restore());
@@ -26,9 +26,7 @@ describe('Salesforce factory client test suite', () => {
     sinon.stub(salesforceClient.oAuthClient, 'login').throws();
     const error = 'Authentication failed';
 
-    await expect(salesforceClient.authorize()).to
-      .eventually
-      .rejectedWith(error);
+    await expect(salesforceClient.authorize()).to.eventually.rejectedWith(error);
   });
 
   it('Should return project list from salesforce and authorized before it', async () => {
@@ -39,10 +37,7 @@ describe('Salesforce factory client test suite', () => {
     sinon.stub(salesforceClient.oAuthClient, 'query').resolves({
       totalSize: 2,
       done: true,
-      records: [
-        { Name: 'project 1' },
-        { Name: 'project 2' },
-      ],
+      records: [{ Name: 'project 1' }, { Name: 'project 2' }],
     });
 
     const { records } = await salesforceClient.getProjects();
