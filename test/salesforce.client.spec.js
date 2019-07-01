@@ -100,11 +100,11 @@ describe('Salesforce factory client test suite', () => {
 
   it('Omits initialization if module already loaded', async () => {
     sinon.stub(salesforceClient, 'hasRobot').returns(true);
-    const initializeStub = sinon.stub(salesforceClient, 'hasRobot').returns(true);
+    const initializeSpy = sinon.spy(salesforceClient, 'initialize');
 
     await SalesforceClient();
 
-    expect(initializeStub.called).to.be.equal(false);
+    expect(initializeSpy.called).to.be.equal(false);
   });
 
   it('Tries to authorise if cannot get credentials from Redis', async () => {
