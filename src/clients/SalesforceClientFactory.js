@@ -1,37 +1,40 @@
+/* eslint-disable camelcase */
 const Rollbar = require('rollbar');
-const { Connection } = require('jsforce');
 const autoBind = require('auto-bind');
+const { Connection } = require('jsforce');
 
 const redisClient = require('./RedisClientFactory');
 
 const {
+  redisTokenKey,
   oauth: { path },
+  authorizationAttempts,
 } = require('../../config/salesforce.config.json');
 
 const {
+  SALESFORCE_INSTANCE_URL,
   SALESFORCE_LOGIN_URL,
   SALESFORCE_CLIENT_ID,
   SALESFORCE_CLIENT_SECRET,
-  SALESFORCE_REDIRECT_URI,
+  SALESFORCE_REDIRECT_URL,
   SALESFORCE_USERNAME,
   SALESFORCE_PASSWORD,
+  SALESFORCE_SECRET_TOKEN,
 } = process.env;
 
 class SalesforceClient {
   constructor() {
-    this.oAuthClient = new Connection({
+    this.connection = new Connection({
+      instanceUrl: SALESFORCE_INSTANCE_URL,
       oauth2: {
         loginUrl: SALESFORCE_LOGIN_URL,
         clientId: SALESFORCE_CLIENT_ID,
         clientSecret: SALESFORCE_CLIENT_SECRET,
-        redirectUri: `${SALESFORCE_REDIRECT_URI}/${path}`,
+        redirectUri: `${SALESFORCE_REDIRECT_URL}/${path}`,
       },
     });
 
-    this.accessToken = null;
-    this.refreshToken = null;
-    this.instanceUrl = null;
-
+    this.robot = null;
     this.redis = redisClient();
 
     autoBind(this);
@@ -39,28 +42,53 @@ class SalesforceClient {
 
   async authorize() {
     const username = SALESFORCE_USERNAME;
-    const password = SALESFORCE_PASSWORD;
+    const password = `${SALESFORCE_PASSWORD}${SALESFORCE_SECRET_TOKEN}`;
+
+    await this.tryAuthenticate(username, password, authorizationAttempts);
+  }
+
+  async tryAuthenticate(username, password, attempts) {
+    if (attempts <= 0) {
+      const error = Error('Salesforce authentication failed');
+      Rollbar.error(error);
+      throw error;
+    }
 
     try {
-      return await this.oAuthClient.login(username, password);
+      const credentials = await this.connection.oauth2.authenticate(username, password);
+      this.setCredentials(credentials);
     } catch (error) {
-      Rollbar.error(error);
-
-      throw new Error('Authentication failed');
+      await this.tryAuthenticate(username, password, attempts - 1);
     }
   }
 
-  isAuthorized() {
-    return Object.keys(this.oAuthClient).includes('userInfo');
+  hasCredentials() {
+    return this.connection.instanceUrl && this.connection.accessToken;
   }
 
-  async getProjects() {
-    if (!this.isAuthorized()) {
+  async restoreCredentials() {
+    try {
+      const credentials = this.redis.get(redisTokenKey);
+      if (!credentials) {
+        throw new Error('No credentials stored in Redis');
+      }
+
+      await this.setCredentials(credentials);
+    } catch (error) {
       await this.authorize();
     }
+  }
 
-    return this.oAuthClient.query('SELECT name FROM project__c');
+  async setCredentials(credentials) {
+    const { instance_url, access_token } = credentials;
+    this.connection.instanceUrl = instance_url;
+    this.connection.accessToken = access_token;
+
+    return this.redis.set(redisTokenKey, JSON.stringify(credentials));
   }
 }
 
-module.exports = () => new SalesforceClient();
+const salesforceClientSingleton = new SalesforceClient();
+
+module.exports = () => salesforceClientSingleton;
+module.exports.salesforceClient = salesforceClientSingleton;

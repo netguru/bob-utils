@@ -1,5 +1,11 @@
 {
+  "redisTokenKey": "sfToken",
+  "authorizationAttempts": 5,
   "oauth": {
+    "scopes": [
+      "api",
+      "refresh_token"
+    ],
     "path": "salesforce/auth"
   }
 }
