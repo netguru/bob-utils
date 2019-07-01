@@ -40,43 +40,60 @@ class SalesforceClient {
     autoBind(this);
   }
 
+  createApexCall(method, endpoint) {
+    const query = this.executeApex.bind(this, method, endpoint);
+
+    return async (...params) => {
+      try {
+        const result = await query(...params);
+        return result;
+      } catch (error) {
+        await this.authorize();
+        return query(...params);
+      }
+    };
+  }
+
+  async executeApex(method, endpoint, ...params) {
+    return this.connection.apex[method](endpoint, ...params);
+  }
+
+  async initialize() {
+    try {
+      const token = await this.restoreCredentials();
+      await this.setCredentials(token);
+    } catch (error) {
+      await this.authorize();
+    }
+  }
+
   async authorize() {
     const username = SALESFORCE_USERNAME;
     const password = `${SALESFORCE_PASSWORD}${SALESFORCE_SECRET_TOKEN}`;
 
-    await this.tryAuthenticate(username, password, authorizationAttempts);
+    return this.tryAuthenticate(username, password, authorizationAttempts);
   }
 
   async tryAuthenticate(username, password, attempts) {
     if (attempts <= 0) {
       const error = Error('Salesforce authentication failed');
+
+      this.robot.logger.error(error);
       Rollbar.error(error);
       throw error;
     }
 
     try {
       const credentials = await this.connection.oauth2.authenticate(username, password);
-      this.setCredentials(credentials);
+      return this.setCredentials(credentials);
     } catch (error) {
-      await this.tryAuthenticate(username, password, attempts - 1);
+      return this.tryAuthenticate(username, password, attempts - 1);
     }
-  }
-
-  hasCredentials() {
-    return this.connection.instanceUrl && this.connection.accessToken;
   }
 
   async restoreCredentials() {
-    try {
-      const credentials = this.redis.get(redisTokenKey);
-      if (!credentials) {
-        throw new Error('No credentials stored in Redis');
-      }
-
-      await this.setCredentials(credentials);
-    } catch (error) {
-      await this.authorize();
-    }
+    const rawCredentials = await this.redis.get(redisTokenKey);
+    return JSON.parse(rawCredentials);
   }
 
   async setCredentials(credentials) {
@@ -86,9 +103,24 @@ class SalesforceClient {
 
     return this.redis.set(redisTokenKey, JSON.stringify(credentials));
   }
+
+  setRobot(robot) {
+    this.robot = robot;
+  }
+
+  hasRobot() {
+    return this.robot;
+  }
 }
 
 const salesforceClientSingleton = new SalesforceClient();
 
-module.exports = () => salesforceClientSingleton;
+module.exports = async (robot) => {
+  if (!salesforceClientSingleton.hasRobot()) {
+    salesforceClientSingleton.setRobot(robot);
+    await salesforceClientSingleton.initialize();
+  }
+
+  return salesforceClientSingleton;
+};
 module.exports.salesforceClient = salesforceClientSingleton;

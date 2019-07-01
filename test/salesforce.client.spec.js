@@ -19,12 +19,16 @@ const env = {
 };
 
 const redis = {
+  get: () => {},
   set: () => {},
 };
 
 sinon.stub(process, 'env').value({ ...process.env, ...env });
 const SalesforceClient = proxyquire('../src/clients/SalesforceClientFactory', {
   './RedisClientFactory': () => redis,
+  rollbar: {
+    error: () => {},
+  },
 });
 
 describe('Salesforce factory client test suite', () => {
@@ -49,16 +53,20 @@ describe('Salesforce factory client test suite', () => {
   });
 
   it('Tries to authenticate at least 5 times on failure', async () => {
-    const authenticateStub = sinon
+    sinon.stub(salesforceClient, 'robot').value({ logger: { error: () => {} } });
+    const clientAuthenticateStub = sinon
       .stub(salesforceClient.connection.oauth2, 'authenticate')
       .rejects();
+
+    const tryAuthenticateSpy = sinon.spy(salesforceClient, 'tryAuthenticate');
 
     try {
       await salesforceClient.authorize();
       // eslint-disable-next-line no-empty
     } catch (error) {}
 
-    expect(authenticateStub.callCount).to.be.equal(5);
+    expect(clientAuthenticateStub.callCount).to.be.equal(5);
+    expect(tryAuthenticateSpy.callCount).to.be.equal(6);
   });
 
   it('Sets connection credentials and stores them to Redis.', async () => {
@@ -74,5 +82,76 @@ describe('Salesforce factory client test suite', () => {
     expect(salesforceClient.connection.instanceUrl).to.be.equal('instanceUrl');
     expect(salesforceClient.connection.accessToken).to.be.equal('accessToken');
     expect(redisSetStub.called).to.be.equal(true);
+  });
+
+  it('Restores credentials on initialization', async () => {
+    sinon.stub(salesforceClient.redis, 'get').resolves(
+      JSON.stringify({
+        instance_url: 'instanceUrl',
+        access_token: 'accessToken',
+      }),
+    );
+
+    await SalesforceClient();
+
+    expect(salesforceClient.connection.instanceUrl).to.be.equal('instanceUrl');
+    expect(salesforceClient.connection.accessToken).to.be.equal('accessToken');
+  });
+
+  it('Omits initialization if module already loaded', async () => {
+    sinon.stub(salesforceClient, 'hasRobot').returns(true);
+    const initializeStub = sinon.stub(salesforceClient, 'hasRobot').returns(true);
+
+    await SalesforceClient();
+
+    expect(initializeStub.called).to.be.equal(false);
+  });
+
+  it('Tries to authorise if cannot get credentials from Redis', async () => {
+    sinon.stub(salesforceClient.redis, 'get').returns();
+
+    const authorizeStub = sinon.stub(salesforceClient, 'authorize').resolves();
+
+    await SalesforceClient();
+
+    expect(authorizeStub.called).to.be.equal(true);
+  });
+
+  it('Creates apex call that binds method and endpoint values', async () => {
+    const executeApexStub = sinon.stub(salesforceClient, 'executeApex').resolves();
+
+    const apexGetMethod = salesforceClient.createApexCall('get', '/projects');
+    expect(apexGetMethod).to.be.a('function');
+
+    const options = { foo: 'bar' };
+
+    await apexGetMethod(options);
+    expect(executeApexStub.called).to.be.equal(true);
+    expect(executeApexStub.calledWith('get', '/projects', options)).to.be.equal(true);
+  });
+
+  it('Runs authorization if unable to process apex call', async () => {
+    const authorizeStub = sinon.stub(salesforceClient, 'authorize');
+    const executeApexStub = sinon.stub(salesforceClient, 'executeApex');
+
+    executeApexStub.onFirstCall().rejects();
+    executeApexStub.onSecondCall().resolves();
+
+    const apexGetMethod = salesforceClient.createApexCall('get', '/projects');
+    await apexGetMethod();
+
+    expect(authorizeStub.called).to.be.equal(true);
+    expect(executeApexStub.calledTwice).to.be.equal(true);
+  });
+
+  it('Calls Connection.apex[HTTPmethod] function when creating apex call', async () => {
+    const apexFake = { get: sinon.stub() };
+    sinon.stub(salesforceClient.connection, 'apex').value(apexFake);
+
+    const params = ['/endpoint', 'val1', 'val2', {}];
+
+    await salesforceClient.executeApex('get', ...params);
+
+    expect(apexFake.get.calledWith(...params)).to.be.equal(true);
   });
 });
