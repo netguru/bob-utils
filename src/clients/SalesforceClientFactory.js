@@ -1,5 +1,4 @@
 /* eslint-disable camelcase */
-const Rollbar = require('rollbar');
 const autoBind = require('auto-bind');
 const { Connection } = require('jsforce');
 
@@ -76,11 +75,7 @@ class SalesforceClient {
 
   async tryAuthenticate(username, password, attempts) {
     if (attempts <= 0) {
-      const error = Error('Salesforce authentication failed');
-
-      this.robot.logger.error(error);
-      Rollbar.error(error);
-      throw error;
+      throw new Error('Salesforce authentication failed');
     }
 
     try {

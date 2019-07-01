@@ -26,9 +26,6 @@ const redis = {
 sinon.stub(process, 'env').value({ ...process.env, ...env });
 const SalesforceClient = proxyquire('../src/clients/SalesforceClientFactory', {
   './RedisClientFactory': () => redis,
-  rollbar: {
-    error: () => {},
-  },
 });
 
 describe('Salesforce factory client test suite', () => {
@@ -40,7 +37,7 @@ describe('Salesforce factory client test suite', () => {
 
   afterEach(() => sinon.restore());
 
-  it('Athorizes with given credentials', async () => {
+  it('Authorizes with given credentials', async () => {
     const authenticateStub = sinon.stub(salesforceClient, 'tryAuthenticate');
     const salesforcePassword = env.SALESFORCE_PASSWORD + env.SALESFORCE_SECRET_TOKEN;
 
