@@ -7,26 +7,49 @@ class AnalyticsReporter {
     this.analyticsUrl = analyticsUrl;
   }
 
-  reportEvent = (category, action, label) => {
-    const url = `${analyticsUrl}?v=1&t=event&tid=${analyticsId}&uid=1&ea=${action}&el=${label}&ec=${category}`;
+  createEventUrl = (category, action, label, type, client) => {
+    const actionUrl = this.createActionUrl(action);
+    const categoryUrl = this.createCategoryUrl(category);
+    const labelUrl = this.createLabelUrl(label);
+    const trackingIdUrl = this.createTrackingIdUrl();
+    let clientUrl = "&uid=1";
 
-    try {
-      return axios.post(url);
-    } catch (error) {
-      Rollbar.error(error);
-
-      throw new Error(`Error on reporting to Google Statistics: ${error}`);
+    if (type === "client") {
+      clientUrl = this.createClientUrl(client);
     }
+
+    const submitUrl = `${
+      this.analyticsUrl
+    }?v=1&t=event${actionUrl}${categoryUrl}${labelUrl}${trackingIdUrl}${clientUrl}`;
+
+    return this.submitEvent(submitUrl);
   };
 
-  reportClientEvent = (category, action, label, client) => {
-    const url = `${analyticsUrl}?v=1&t=event&tid=${analyticsId}&cid=${client}&ea=${action}&el=${label}&ec=${category}`;
+  createActionUrl = action => {
+    return `&ea=${action}`;
+  };
 
+  createCategoryUrl = category => {
+    return `&ec=${category}`;
+  };
+
+  createLabelUrl = label => {
+    return `&el=${label}`;
+  };
+
+  createTrackingIdUrl = () => {
+    return `&tid=${this.trackingId}`;
+  };
+
+  createClientUrl = client => {
+    return `&cid=${client}`;
+  };
+
+  submitEvent = url => {
     try {
       return axios.post(url);
     } catch (error) {
       Rollbar.error(error);
-
       throw new Error(`Error on reporting to Google Statistics: ${error}`);
     }
   };
