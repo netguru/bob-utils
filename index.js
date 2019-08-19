@@ -25,6 +25,7 @@ const Locales = require('./src/Locales');
 const SlackIdMapper = require('./src/SlackIdMapper');
 const CustomRoutes = require('./src/CustomRoutes');
 const BulkMessageSender = require('./src/BulkMessageSender');
+const AnalyticsReporter = require('./src/AnalyticsReporter');
 
 module.exports = {
   botCron,
@@ -45,6 +46,7 @@ module.exports = {
   SlackIdMapper,
   CustomRoutes,
   BulkMessageSender,
+  AnalyticsReporter,
   clients: {
     AtlassianClientFactory,
     CircleciClientFactory,
@@ -53,6 +55,6 @@ module.exports = {
     RedisClientFactory,
     SlackClientFactory,
     JiraClient,
-    SalesforceClientFactory,
-  },
+    SalesforceClientFactory
+  }
 };
