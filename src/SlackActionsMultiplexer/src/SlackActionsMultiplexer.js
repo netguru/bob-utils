@@ -5,7 +5,11 @@ const decode = require('unescape');
 
 const RespondMultiplexer = require('../../RespondMultiplexer');
 const SlackActionRequest = require('../../SlackActionRequest');
-const { actionsEndpoint, slashEndpoint } = require('../../../config/slackActions.config.json');
+const {
+  actionsEndpoint,
+  slashEndpoint,
+  eventsEndpoint,
+} = require('../../../config/slackActions.config.json');
 
 class SlackActionsMultiplexer {
   constructor(robot) {
@@ -16,12 +20,15 @@ class SlackActionsMultiplexer {
     this.actionMultiplexer = new RespondMultiplexer(logger);
     this.blockActionMultiplexer = new RespondMultiplexer(logger);
     this.slashActionsMultiplexer = new RespondMultiplexer(logger);
+    this.eventMultiplexer = new RespondMultiplexer(logger);
 
     this.setupActionMultiplexers();
     this.setDefaultResponse();
 
     this.createRoutesForInteractive(logger);
     this.createRoutesForSlash(logger);
+    this.createRoutesForReactionEvents(logger);
+    this.createRoutesForHandshakers(logger);
   }
 
   addAction(regexp, action) {
@@ -43,6 +50,20 @@ class SlackActionsMultiplexer {
       throw new Error('Slash command duplication');
     }
     this.slashActionsMultiplexer.addResponse(regexp, action);
+  }
+
+  addReactionEvent(regexp, action) {
+    if (this.eventAlreadyExists(regexp)) {
+      throw new Error('Event duplication');
+    }
+    this.eventMultiplexer.addResponse(regexp, action);
+  }
+
+  addEventHandshaker(regexp, action) {
+    if (this.eventAlreadyExists(regexp)) {
+      throw new Error('Event duplication');
+    }
+    this.eventMultiplexer.addResponse(regexp, action);
   }
 
   async sendResponseMessage(payload) {
@@ -112,6 +133,42 @@ class SlackActionsMultiplexer {
     });
   }
 
+  createRoutesForReactionEvents(logger) {
+    this.robot.router.post(eventsEndpoint, async (req, res) => {
+      const {
+        body: {
+          event: { reaction },
+        },
+      } = req;
+      
+      try {
+        this.eventMultiplexer.choose(reaction);
+        await this.eventMultiplexer.chosen.action(res, req, this.robot);
+      } catch (error) {
+        Rollbar.error(error);
+        logger.error(error);
+        res.sendStatus(500);
+      }
+    });
+  }
+
+  createRoutesForHandshakers(logger) {
+    this.robot.router.post(eventsEndpoint, async (req, res) => {
+      const {
+        body: { type },
+      } = req;
+
+      try {
+        this.eventMultiplexer.choose(type);
+        await this.eventMultiplexer.chosen.action(res, req, this.robot);
+      } catch (error) {
+        Rollbar.error(error);
+        logger.error(error);
+        res.sendStatus(500);
+      }
+    });
+  }
+
   setupActionMultiplexers() {
     const assignMultiplexer = (multiplexer, path) => ({ multiplexer, path });
     this.interactiveMultiplexers = new Map([
@@ -126,14 +183,19 @@ class SlackActionsMultiplexer {
   }
 
   setDefaultResponse() {
-    this.actionMultiplexer.setDefaultResponse(() => { throw Error('No callback found'); });
-    this.blockActionMultiplexer.setDefaultResponse(() => { throw Error('No block action found'); });
-    this.slashActionsMultiplexer.setDefaultResponse(() => { throw Error('No slash command found'); });
+    this.actionMultiplexer.setDefaultResponse(() => {
+      throw Error('No callback found');
+    });
+    this.blockActionMultiplexer.setDefaultResponse(() => {
+      throw Error('No block action found');
+    });
+    this.slashActionsMultiplexer.setDefaultResponse(() => {
+      throw Error('No slash command found');
+    });
   }
 
   checkIdCollision(regexp, multiplexer) {
-    return _.some(multiplexer.responses,
-      ({ trigger }) => trigger.toString() === regexp.toString());
+    return _.some(multiplexer.responses, ({ trigger }) => trigger.toString() === regexp.toString());
   }
 
   actionIdAlreadyExists(regexp) {
@@ -145,6 +207,10 @@ class SlackActionsMultiplexer {
   }
 
   slashCommandIdAlreadyExists(regexp) {
+    return this.checkIdCollision(regexp, this.slashActionsMultiplexer);
+  }
+
+  eventAlreadyExists(regexp) {
     return this.checkIdCollision(regexp, this.slashActionsMultiplexer);
   }
 }
