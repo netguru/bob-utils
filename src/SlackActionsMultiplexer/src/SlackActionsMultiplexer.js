@@ -28,7 +28,6 @@ class SlackActionsMultiplexer {
     this.createRoutesForInteractive(logger);
     this.createRoutesForSlash(logger);
     this.createRoutesForReactionEvents(logger);
-    this.createRoutesForHandshakers(logger);
   }
 
   addAction(regexp, action) {
@@ -135,31 +134,13 @@ class SlackActionsMultiplexer {
 
   createRoutesForReactionEvents(logger) {
     this.robot.router.post(eventsEndpoint, async (req, res) => {
-      const {
-        body: {
-          event: { reaction },
-        },
-      } = req;
-      
       try {
-        this.eventMultiplexer.choose(reaction);
-        await this.eventMultiplexer.chosen.action(res, req, this.robot);
-      } catch (error) {
-        Rollbar.error(error);
-        logger.error(error);
-        res.sendStatus(500);
-      }
-    });
-  }
-
-  createRoutesForHandshakers(logger) {
-    this.robot.router.post(eventsEndpoint, async (req, res) => {
-      const {
-        body: { type },
-      } = req;
-
-      try {
-        this.eventMultiplexer.choose(type);
+        if (req.body.event && req.body.event.reaction) {
+          this.eventMultiplexer.choose(req.body.event.reaction);
+        }
+        if (req.body.type) {
+          this.eventMultiplexer.choose(req.body.type);
+        }
         await this.eventMultiplexer.chosen.action(res, req, this.robot);
       } catch (error) {
         Rollbar.error(error);
