@@ -138,7 +138,7 @@ class SlackActionsMultiplexer {
         if (req.body.event && req.body.event.reaction) {
           this.eventMultiplexer.choose(req.body.event.reaction);
         }
-        if (req.body.type) {
+        if (req.body.type === 'url_verification') {
           this.eventMultiplexer.choose(req.body.type);
         }
         await this.eventMultiplexer.chosen.action(res, req, this.robot);
