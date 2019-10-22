@@ -143,9 +143,13 @@ class SlackActionsMultiplexer {
         }
         await this.eventMultiplexer.chosen.action(res, req, this.robot);
       } catch (error) {
-        Rollbar.error(error);
-        logger.error(error);
-        res.sendStatus(500);
+        if (error.message === 'Default event triggered') {
+          res.sendStatus(200);
+        } else {
+          Rollbar.error(error);
+          logger.error(error);
+          res.sendStatus(500);
+        }
       }
     });
   }
@@ -173,6 +177,9 @@ class SlackActionsMultiplexer {
     this.slashActionsMultiplexer.setDefaultResponse(() => {
       throw Error('No slash command found');
     });
+    this.eventMultiplexer.setDefaultResponse(()=> {
+      throw Error('Default event triggered');
+    })
   }
 
   checkIdCollision(regexp, multiplexer) {
