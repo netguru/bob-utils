@@ -92,12 +92,15 @@ class SlackActionsMultiplexer {
   }
 
   createRoutesForInteractive(logger) {
+    console.log('DEBUG-2: createRoutesForInteractive');
     this.robot.router.post(actionsEndpoint, async (req, res) => {
+      console.log('DEBUG-2: interactive');
       const actionJSONPayload = this.unescapeQueryParamsInActionPayload(req.body.payload);
-
+      console.log('DEBUG-2: actionJSONPayload', actionJSONPayload);
       try {
         await this.sendResponseMessage(actionJSONPayload);
         const { multiplexer, path } = this.getInteractiveMultiplexer(actionJSONPayload);
+        console.log('DEBUG-2: multiplexer', multiplexer);
 
         multiplexer.choose(_.get(actionJSONPayload, path));
         await multiplexer.chosen.action(res, actionJSONPayload, this.robot);
