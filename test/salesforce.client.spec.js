@@ -151,4 +151,36 @@ describe('Salesforce factory client test suite', () => {
 
     expect(apexFake.get.calledWith(...params)).to.be.equal(true);
   });
+
+  it('Creates query call that binds query SOQL string', async () => {
+    const executeQueryStub = sinon.stub(salesforceClient, 'executeQuery').resolves();
+
+    const queryGetMethod = salesforceClient.createQueryCall('SELECT Id From Project__c');
+    expect(queryGetMethod).to.be.a('function');
+
+    await queryGetMethod();
+    expect(executeQueryStub.called).to.be.equal(true);
+    expect(executeQueryStub.calledWith('SELECT Id From Project__c')).to.be.equal(true);
+  });
+
+  it('Runs authorization if unable to process query call', async () => {
+    const authorizeStub = sinon.stub(salesforceClient, 'authorize');
+    const executeQueryStub = sinon.stub(salesforceClient, 'executeQuery');
+
+    executeQueryStub.onFirstCall().rejects();
+    executeQueryStub.onSecondCall().resolves();
+
+    const queryGetMethod = salesforceClient.createQueryCall('SELECT Id From Project__c');
+    await queryGetMethod();
+
+    expect(authorizeStub.called).to.be.equal(true);
+    expect(executeQueryStub.calledTwice).to.be.equal(true);
+  });
+
+  it('Calls Connection.query function when creating query call', async () => {
+    const queryStub = sinon.stub(salesforceClient.connection, 'query').resolves();
+    const params = ['SELECT Id From Project__c'];
+    await salesforceClient.executeQuery(...params);
+    expect(queryStub.calledWith(...params)).to.be.equal(true)
+  });
 });
