@@ -57,6 +57,24 @@ class SalesforceClient {
     return this.connection.apex[method](endpoint, ...params);
   }
 
+  createQueryCall(soqlQuery) {
+    const query = this.executeQuery.bind(this, soqlQuery);
+
+    return async () => {
+      try {
+        const result = await query();
+        return result;
+      } catch (error) {
+        await this.authorize();
+        return query();
+      }
+    }
+  }
+
+  async executeQuery(query) {
+    return this.connection.query(query);
+  }
+
   async initialize() {
     try {
       const token = await this.restoreCredentials();
