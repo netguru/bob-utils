@@ -54,6 +54,20 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(() => slackActions.addBlock(/some_cb/, () => { })).to.throw('Block id duplication');
   });
 
+  it('Should throw an error in case of event duplicate', () => {
+    slackActions.addEvent(/some_cb/, () => {});
+
+    expect(() => slackActions.addEvent(/some_cb/, () => { })).to.throw('Event duplication');
+  });
+
+  it('addReactionEvent should call addEvent method', () => {
+    const addEventStub = sinon.stub(slackActions, 'addEvent');
+    const regexFake = /test/;
+    const actionFake = () => {};
+    slackActions.addReactionEvent(regexFake, actionFake);
+    expect(addEventStub.calledOnce).to.be.equal(true);
+  });
+
   it('Should unescape HTML entities in query params', async () => {
     let queryParams = null;
     const responseStub = sinon
