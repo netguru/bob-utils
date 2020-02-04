@@ -27,7 +27,7 @@ class SlackActionsMultiplexer {
 
     this.createRoutesForInteractive(logger);
     this.createRoutesForSlash(logger);
-    this.createRoutesForReactionEvents(logger);
+    this.createRoutesForEvents(logger);
   }
 
   addAction(regexp, action) {
@@ -51,11 +51,15 @@ class SlackActionsMultiplexer {
     this.slashActionsMultiplexer.addResponse(regexp, action);
   }
 
-  addReactionEvent(regexp, action) {
+  addEvent(regexp, action) {
     if (this.eventAlreadyExists(regexp)) {
       throw new Error('Event duplication');
     }
     this.eventMultiplexer.addResponse(regexp, action);
+  }
+
+  addReactionEvent(regexp, action) {
+    this.addEvent(regexp, action);
   }
 
   addEventHandshaker(regexp, action) {
@@ -132,11 +136,16 @@ class SlackActionsMultiplexer {
     });
   }
 
-  createRoutesForReactionEvents(logger) {
+  createRoutesForEvents(logger) {
     this.robot.router.post(eventsEndpoint, async (req, res) => {
       try {
-        if (req.body.event && req.body.event.reaction) {
-          this.eventMultiplexer.choose(req.body.event.reaction);
+        if (req.body.event) {
+          if (req.body.event.reaction) {
+            this.eventMultiplexer.choose(req.body.event.reaction);
+          }
+          if (req.body.event.channel) {
+            this.eventMultiplexer.choose(req.body.event.channel.name);
+          }
         }
         if (req.body.type === 'url_verification') {
           this.eventMultiplexer.choose(req.body.type);
@@ -177,9 +186,9 @@ class SlackActionsMultiplexer {
     this.slashActionsMultiplexer.setDefaultResponse(() => {
       throw Error('No slash command found');
     });
-    this.eventMultiplexer.setDefaultResponse(()=> {
+    this.eventMultiplexer.setDefaultResponse(() => {
       throw Error('Default event triggered');
-    })
+    });
   }
 
   checkIdCollision(regexp, multiplexer) {
@@ -199,7 +208,7 @@ class SlackActionsMultiplexer {
   }
 
   eventAlreadyExists(regexp) {
-    return this.checkIdCollision(regexp, this.slashActionsMultiplexer);
+    return this.checkIdCollision(regexp, this.eventMultiplexer);
   }
 }
 
