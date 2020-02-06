@@ -140,12 +140,12 @@ class SlackActionsMultiplexer {
     this.robot.router.post(eventsEndpoint, async (req, res) => {
       try {
         if (req.body.event) {
-          const { type } = req.body.event;
-          if (req.body.event.reaction) {
-            this.eventMultiplexer.choose(`${type}:${req.body.event.reaction}`);
+          const { type, reaction, channel } = req.body.event;
+          if (reaction) {
+            this.eventMultiplexer.choose(`${type}:${reaction}`);
           }
-          if (req.body.event.channel) {
-            this.eventMultiplexer.choose(`${type}:${req.body.event.channel.name}`);
+          if (channel) {
+            this.eventMultiplexer.choose(`${type}:${channel.name}`);
           }
         }
         if (req.body.type === 'url_verification') {
