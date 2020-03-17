@@ -181,6 +181,6 @@ describe('Salesforce factory client test suite', () => {
     const queryStub = sinon.stub(salesforceClient.connection, 'query').resolves();
     const params = ['SELECT Id From Project__c'];
     await salesforceClient.executeQuery(...params);
-    expect(queryStub.calledWith(...params)).to.be.equal(true)
+    expect(queryStub.calledWith(...params)).to.be.equal(true);
   });
 });

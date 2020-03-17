@@ -169,6 +169,7 @@ class SlackActionsMultiplexer {
     this.interactiveMultiplexers = new Map([
       ['interactive_message', assignMultiplexer(this.actionMultiplexer, 'callback_id')],
       ['block_actions', assignMultiplexer(this.blockActionMultiplexer, 'actions[0].action_id')],
+      ['view_submission', assignMultiplexer(this.actionMultiplexer, 'view.callback_id')],
     ]);
   }
 
