@@ -49,6 +49,8 @@ module.exports = {
   CustomRoutes,
   BulkMessageSender,
   AnalyticsReporter,
+  BlockBuilder,
+  ModalBuilder,
   clients: {
     AtlassianClientFactory,
     CircleciClientFactory,
