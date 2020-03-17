@@ -26,6 +26,8 @@ const SlackIdMapper = require('./src/SlackIdMapper');
 const CustomRoutes = require('./src/CustomRoutes');
 const BulkMessageSender = require('./src/BulkMessageSender');
 const AnalyticsReporter = require('./src/AnalyticsReporter');
+const BlockBuilder = require('./src/BlockBuilder');
+const ModalBuilder = require('./src/ModalBuilder');
 
 module.exports = {
   botCron,
@@ -55,6 +57,6 @@ module.exports = {
     RedisClientFactory,
     SlackClientFactory,
     JiraClient,
-    SalesforceClientFactory
-  }
+    SalesforceClientFactory,
+  },
 };
