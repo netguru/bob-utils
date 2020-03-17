@@ -68,7 +68,7 @@ class SalesforceClient {
         await this.authorize();
         return query();
       }
-    }
+    };
   }
 
   async executeQuery(query) {
