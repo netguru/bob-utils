@@ -7,6 +7,7 @@ class BlockBuilder {
       element: params.element,
       ...(params.hint && { hint: params.hint }),
       ...(params.optional && { optional: params.optional }),
+      ...(params.block_id && { block_id: params.block_id }),
     };
   }
 
@@ -21,6 +22,7 @@ class BlockBuilder {
       accessory: params.accessory,
       ...(fields && { fields }),
       ...(text && { text }),
+      ...(params.block_id && { block_id: params.block_id }),
     };
   }
 
@@ -28,6 +30,7 @@ class BlockBuilder {
     return {
       type: 'actions',
       elements,
+      ...(params.block_id && { block_id: params.block_id }),
     };
   }
 
@@ -67,16 +70,14 @@ class BlockBuilder {
       ...(params.action_id && { action_id: params.action_id }),
       ...(params.url && { url: params.actionurl_id }),
       ...(params.style && { action_id: params.style }),
-      ...(params.confirm && { action_id: params.confirm }),
+      ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
     };
   }
 
   static createInputField(params = {}) {
     return {
       type: 'plain_text_input',
-      placehoder:
-        params.placeholder
-        && BlockBuilder.createPlainTextObject(params.placehoder),
+      ...(params.placeholder && { placeholder: BlockBuilder.createPlainTextObject(params.placeholder) }),
       ...(params.action_id && { action_id: params.action_id }),
       ...(params.initial_value && { initial_value: params.initial_value }),
       ...(params.multiline && { multiline: params.multiline }),
@@ -92,12 +93,10 @@ class BlockBuilder {
   static createDatepicker(params = {}) {
     return {
       type: 'datepicker',
-      placehoder:
-        params.placeholder
-        && BlockBuilder.createPlainTextObject(params.placehoder),
+      ...(params.placeholder && { placeholder: BlockBuilder.createPlainTextObject(params.placeholder) }),
       ...(params.initial_date && { initial_date: params.initial_date }),
       ...(params.action_id && { action_id: params.action_id }),
-      ...(params.confirm && { confirm: params.confirm }),
+      ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
     };
   }
 
@@ -107,23 +106,23 @@ class BlockBuilder {
       options: params.options || [],
       ...(params.initial_options && { initial_options: params.initial_options }),
       ...(params.action_id && { action_id: params.action_id }),
-      ...(params.confirm && { confirm: params.confirm }),
+      ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
     };
   }
 
   static createBaselineSelect(params = {}) {
     return {
-      placeholder: BlockBuilder.createPlainTextObject(params.placehoder),
+      ...(params.placeholder && { placeholder: BlockBuilder.createPlainTextObject(params.placeholder) }),
       ...(params.action_id && { action_id: params.action_id }),
-      ...(params.confirm && { confirm: params.confirm }),
+      ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
     };
   }
 
   static createBaselineMultiSelect(params = {}) {
     return {
-      placeholder: BlockBuilder.createPlainTextObject(params.placehoder),
+      ...(params.placeholder && { placeholder: BlockBuilder.createPlainTextObject(params.placeholder) }),
       ...(params.action_id && { action_id: params.action_id }),
-      ...(params.confirm && { confirm: params.confirm }),
+      ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
       ...(params.max_selected_items && { max_selected_items: params.max_selected_items }),
     };
   }
@@ -249,6 +248,31 @@ class BlockBuilder {
       source: 'remote',
       ...(params.external_id && { external_id: params.external_id }),
       ...(params.block_id && { block_id: params.block_id }),
+    };
+  }
+
+  static createConfirm(params = {}) {
+    return {
+      title: BlockBuilder.createPlainTextObject(params.title || 'Are you sure?'),
+      text: BlockBuilder.createMrkdwnTextObject(params.text || 'Are you sure?'),
+      confirm: BlockBuilder.createPlainTextObject(params.confirm || 'Confirm'),
+      deny: BlockBuilder.createPlainTextObject(params.deny || 'Deny'),
+    };
+  }
+
+  static createOption(params = {}) {
+    return {
+      text: BlockBuilder.createPlainTextObject(params.text),
+      value: BlockBuilder.serializeValue(params.value),
+      ...(params.description && { description: BlockBuilder.createPlainTextObject(params.description) }),
+      ...(params.url && { url: params.url }),
+    };
+  }
+
+  static createOptionGroup(params = {}) {
+    return {
+      label: BlockBuilder.createLabel(params.label),
+      ...(params.options && { options: params.options.map(el => BlockBuilder.createOption(el)) }),
     };
   }
 }
