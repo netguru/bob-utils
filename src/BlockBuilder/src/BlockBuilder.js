@@ -103,7 +103,7 @@ class BlockBuilder {
   static createCheckboxes(params = {}) {
     return {
       type: 'checkboxes',
-      options: params.options || [],
+      ...(params.options && { options: params.options }),
       ...(params.initial_options && { initial_options: params.initial_options }),
       ...(params.action_id && { action_id: params.action_id }),
       ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
@@ -132,7 +132,7 @@ class BlockBuilder {
     return {
       ...BlockBuilder.createBaselineSelect(params),
       type: 'static_select',
-      options: params.options || [],
+      ...(params.options && { options: params.options }),
       ...(params.option_groups && { option_groups: params.option_groups }),
       ...(params.initial_option && { initial_option: params.initial_option }),
     };
@@ -142,7 +142,7 @@ class BlockBuilder {
     return {
       ...BlockBuilder.createBaselineMultiSelect(params),
       type: 'multi_static_select',
-      options: params.options || [],
+      ...(params.options && { options: params.options }),
       ...(params.option_groups && { option_groups: params.option_groups }),
       ...(params.initial_options && { initial_options: params.initial_options }),
     };
