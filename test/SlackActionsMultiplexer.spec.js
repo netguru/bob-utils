@@ -48,6 +48,12 @@ describe('SlackActionsMultiplexer test suite', () => {
     expect(() => slackActions.addSlashCommand(/some_cb/, () => { })).to.throw('Slash command duplication');
   });
 
+  it('Should throw an error in case of slashcommand duplicate', () => {
+    slackActions.addExternalData(/some_cb/, () => {});
+
+    expect(() => slackActions.addExternalData(/some_cb/, () => { })).to.throw('External data id duplication');
+  });
+
   it('Should throw an error in case of block action duplicate', () => {
     slackActions.addBlock(/some_cb/, () => {});
 
