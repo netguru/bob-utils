@@ -26,10 +26,10 @@ class BlockBuilder {
     };
   }
 
-  static createAction(elements = []) {
+  static createAction(params = {}) {
     return {
       type: 'actions',
-      elements,
+      ...(params.elements && { elements: params.elements }),
       ...(params.block_id && { block_id: params.block_id }),
     };
   }
