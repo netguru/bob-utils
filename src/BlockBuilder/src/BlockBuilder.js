@@ -73,7 +73,7 @@ class BlockBuilder {
       value: BlockBuilder.serializeValue(params.value),
       ...(params.action_id && { action_id: params.action_id }),
       ...(params.url && { url: params.actionurl_id }),
-      ...(params.style && { action_id: params.style }),
+      ...(params.style && { style: params.style }),
       ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
     };
   }
