@@ -156,7 +156,7 @@ class BlockBuilder {
     return {
       ...BlockBuilder.createBaselineSelect(params),
       type: 'external_select',
-      ...(params.min_query_length && { min_query_length: params.min_query_length }),
+      ...(!isNaN(params.min_query_length) && { min_query_length: params.min_query_length }),
       ...(params.initial_option && { initial_option: params.initial_option }),
     };
   }
