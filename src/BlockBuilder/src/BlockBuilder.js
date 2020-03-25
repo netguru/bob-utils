@@ -5,7 +5,7 @@ class BlockBuilder {
       type: 'input',
       label: BlockBuilder.createLabel(params.label),
       element: params.element,
-      ...(params.hint && { hint: params.hint }),
+      ...(params.hint && { hint: BlockBuilder.createHint(params.hint) }),
       ...(params.optional && { optional: params.optional }),
       ...(params.block_id && { block_id: params.block_id }),
     };
@@ -26,10 +26,10 @@ class BlockBuilder {
     };
   }
 
-  static createAction(elements = []) {
+  static createAction(params = {}) {
     return {
       type: 'actions',
-      elements,
+      ...(params.elements && { elements: params.elements }),
       ...(params.block_id && { block_id: params.block_id }),
     };
   }
@@ -52,6 +52,10 @@ class BlockBuilder {
   }
 
   static createLabel(text = 'label') {
+    return BlockBuilder.createPlainTextObject(text);
+  }
+
+  static createHint(text) {
     return BlockBuilder.createPlainTextObject(text);
   }
 
@@ -152,7 +156,7 @@ class BlockBuilder {
     return {
       ...BlockBuilder.createBaselineSelect(params),
       type: 'external_select',
-      ...(params.min_query_length && { min_query_length: params.min_query_length }),
+      ...(!isNaN(params.min_query_length) && { min_query_length: params.min_query_length }),
       ...(params.initial_option && { initial_option: params.initial_option }),
     };
   }
