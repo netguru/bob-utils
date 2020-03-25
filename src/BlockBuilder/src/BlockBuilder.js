@@ -5,7 +5,7 @@ class BlockBuilder {
       type: 'input',
       label: BlockBuilder.createLabel(params.label),
       element: params.element,
-      ...(params.hint && { hint: params.hint }),
+      ...(params.hint && { hint: BlockBuilder.createHint(params.hint) }),
       ...(params.optional && { optional: params.optional }),
       ...(params.block_id && { block_id: params.block_id }),
     };
@@ -52,6 +52,10 @@ class BlockBuilder {
   }
 
   static createLabel(text = 'label') {
+    return BlockBuilder.createPlainTextObject(text);
+  }
+
+  static createHint(text) {
     return BlockBuilder.createPlainTextObject(text);
   }
 
