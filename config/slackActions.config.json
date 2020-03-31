@@ -1,5 +1,6 @@
 {
   "actionsEndpoint": "/slack/interactivity",
   "eventsEndpoint": "/slack/event",
-  "slashEndpoint": "/slack/slashCommands"
+  "slashEndpoint": "/slack/slashCommands",
+  "externalSelectEndpoint": "/slack/externalSelect"
 }
