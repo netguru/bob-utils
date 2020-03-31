@@ -1,8 +1,8 @@
-
 class BotResponseError extends Error {
-  constructor(errorMessage, userMessage) {
+  constructor(errorMessage, userMessage, data) {
     super(errorMessage);
     this.userMessage = userMessage;
+    this.data = data;
   }
 }
 
