@@ -60,7 +60,7 @@ class BlockBuilder {
   }
 
   static serializeValue(value) {
-    if (!value) {
+    if (value === undefined) {
       return '';
     }
     return typeof value === 'string' ? value : JSON.stringify(value);
