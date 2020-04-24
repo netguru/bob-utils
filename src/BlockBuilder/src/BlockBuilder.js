@@ -114,6 +114,16 @@ class BlockBuilder {
     };
   }
 
+  static createRadioButtons(params = {}) {
+    return {
+      type: 'radio_buttons',
+      ...(params.options && { options: params.options }),
+      ...(params.initial_option && { initial_option: params.initial_option }),
+      ...(params.action_id && { action_id: params.action_id }),
+      ...(params.confirm && { confirm: BlockBuilder.createConfirm(params.confirm) }),
+    };
+  }
+
   static createBaselineSelect(params = {}) {
     return {
       ...(params.placeholder && { placeholder: BlockBuilder.createPlainTextObject(params.placeholder) }),
