@@ -6,6 +6,7 @@ const RedisClientFactory = require('./src/clients/RedisClientFactory');
 const SlackClientFactory = require('./src/clients/SlackClientFactory');
 const JiraClient = require('./src/clients/JiraClient');
 const SalesforceClientFactory = require('./src/clients/SalesforceClientFactory');
+const JiraClientFactory = require('./src/clients/JiraClientFactory');
 
 const MessageRenderer = require('./src/MessageRenderer');
 const MessageBuilder = require('./src/MessageBuilder');
@@ -60,5 +61,6 @@ module.exports = {
     SlackClientFactory,
     JiraClient,
     SalesforceClientFactory,
+    JiraClientFactory,
   },
 };

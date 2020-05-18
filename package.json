@@ -24,6 +24,7 @@
     "hubot-slack": "^4.7.1",
     "humanize-duration": "^3.15.1",
     "ioredis": "^4.2.0",
+    "jira-client": "^6.17.0",
     "jira-connector": "^2.10.0",
     "js-yaml": "^3.13.1",
     "jsforce": "^1.9.1",
