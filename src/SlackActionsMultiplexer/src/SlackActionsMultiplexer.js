@@ -182,7 +182,7 @@ class SlackActionsMultiplexer {
           }
         }
         if (req.body.type === 'url_verification') {
-          this.eventMultiplexer.choose(req.body.type);
+          return res.send(req.body.challenge);
         }
         await this.eventMultiplexer.chosen.action(res, req, this.robot);
       } catch (error) {
