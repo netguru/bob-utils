@@ -14,6 +14,7 @@ const errorMessages = {
 const pluginNames = [
   'pluginOne',
   'pluginTwo',
+  'pluginThree',
 ];
 
 const configuration = {
@@ -25,10 +26,14 @@ const configuration = {
     'CC',
     'DD',
   ],
+  [pluginNames[2]]: [
+    'EE',
+  ],
 };
 
 const enabled = [
   pluginNames[0],
+  pluginNames[2],
 ];
 
 describe('PluginsLoader test scope', () => {
@@ -58,15 +63,16 @@ describe('PluginsLoader test scope', () => {
 
     afterEach(() => sinon.restore());
 
-    it('Should load plugins and warn about missing enviromental variables', () => {
+    it('Should load plugins and warn about missing environmental variables', () => {
       sinon.stub(fs, 'readdirSync').returns(pluginNames);
       sinon.stub(path, 'resolve').returns('ab/acd');
       sinon.stub(process, 'env').value({ AA: 1 });
+      sinon.stub(process, 'env').value({ EE: 1 });
 
       pluginsLoader.loadPlugins('ac/dv');
 
       expect(pluginsLoader.robot.load.calledOnceWith('ab/acd')).to.equal(true);
-      expect(pluginsLoader.robot.logger.warning.calledTwice).to.equal(true);
+      expect(pluginsLoader.robot.logger.warning.callCount).to.equal(4);
     });
 
     it('Should throw an error if plugin does not have its configuration', () => {

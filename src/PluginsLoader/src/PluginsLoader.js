@@ -48,13 +48,22 @@ class PluginsLoader {
       throw new Error(`Plugin ${pluginName} is not present in the configuration, please run: yarn docs`);
     }
 
+    let correctConfig = true;
     pluginConfig.forEach((envName) => {
       if (!(envName in process.env)) {
-        this.robot.logger.warning(`The enviromental variable \x1b[36m ${envName} \x1b[0m is missing for plugin \x1b[35m ${pluginName} \x1b[0m`);
+        this.robot.logger.warning(`The environmental variable \x1b[36m ${envName} \x1b[0m is missing for plugin \x1b[35m ${pluginName} \x1b[0m`);
+        correctConfig = false;
+      } else if(!process.env[envName]) {
+        this.robot.logger.warning(`The environmental variable \x1b[36m ${envName} \x1b[0m from \x1b[35m ${pluginName} \x1b[0m plugin does not have specified value`);
+        correctConfig = false;
       }
     });
 
-    this.robot.load(pluginPath);
+    if (!correctConfig) {
+      return this.robot.logger.warning(`\x1b[31m Plugin \x1b[4m ${pluginName} \x1b[0m \x1b[31m is turned off \x1b[0m`);
+    }
+
+    return this.robot.load(pluginPath);
   }
 }
 
