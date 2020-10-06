@@ -83,7 +83,7 @@ class SlackActionsMultiplexer {
     let state;
 
     if (payload && payload.state) {
-      state = JSON.parse(payload.state);
+      state = (typeof payload.state === 'string' && JSON.parse(payload.state)) || payload.state;
     }
 
     if (state && state.response) {
@@ -154,7 +154,7 @@ class SlackActionsMultiplexer {
         if (payload.container.type === 'view') {
           const {
             action_id: actionId,
-            view: { external_id: externalId }
+            view: { external_id: externalId },
           } = payload;
           id = `${externalId}:${actionId}`;
         }
