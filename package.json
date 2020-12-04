@@ -18,7 +18,7 @@
     "axios": "^0.19.0",
     "circleci": "^0.3.3",
     "cron": "^1.8.2",
-    "googleapis": "^33.0.0",
+    "googleapis": "^39.1.0",
     "hubot": "^3.3.2",
     "hubot-heroku-keepalive": "^1.0.3",
     "hubot-slack": "^4.7.1",
